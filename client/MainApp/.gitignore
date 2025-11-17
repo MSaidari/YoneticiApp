@@ -1,0 +1,20 @@
+# Genel Windows/Mac dosyaları
+.DS_Store
+*.log
+npm-debug.log*
+yarn-error.log*
+
+# Node.js bağımlılıkları (EN ÖNEMLİSİ)
+# Bu satırlar binlerce dosyanın gitmesini engeller
+/client/node_modules
+/mock_api/node_modules
+
+# Expo ve Android/iOS ayar dosyaları
+/client/.expo
+/client/.idea
+/client/android/app/build
+/client/ios/build
+
+# Not: mock_api/db.json dosyasını GÖNDERİYORUZ.
+# Bu sayede my-json-server gibi servisler çalışabilir.
+# Eğer onu da gizlemek isteseydik '/mock_api/db.json' yazardık.
