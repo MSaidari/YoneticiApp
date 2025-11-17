@@ -17,6 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { fetchUsers, createUser } from "../Components/Api";
 
 export const AuthScreen = () => {
   const { login } = useAuth();
@@ -40,150 +41,63 @@ export const AuthScreen = () => {
 
   /**
    * handleLogin: Kullanıcı girişi yapan fonksiyon
-   * 
-   * Yapılan İşlemler:
-   * 1. API URL'ini belirler (Android emulator vs iOS simulator)
-   * 2. API'den tüm kullanıcıları alır (GET isteği)
-   * 3. Email ve password kontrolü yapar
-   * 4. Başarılıysa login() fonksiyonunu çağırır
+   * Api.tsx'teki fetchUsers fonksiyonunu kullanır
    */
   const handleLogin = async () => {
     try {
-      // API URL Belirleme
-      // Android Emulator: localhost çalışmaz, 10.0.2.2 kullanmalıyız
-      // 10.0.2.2 → Android emulator'ün host makineye erişmek için kullandığı özel IP
-      // iOS Simulator: localhost doğrudan çalışır
-      const API_URL =
-        Platform.OS === "android"
-          ? "http://10.0.2.2:3001/users"  // Android için özel IP
-          : "http://localhost:3001/users"; // iOS için localhost
-
-      console.log("API'ye bağlanılıyor:", API_URL);
-      
-      // API'ye GET İsteği Gönder
-      // fetch(): JavaScript'in HTTP istekleri için kullandığı fonksiyon
-      // await: İstek tamamlanana kadar bekle (async/await pattern)
-      const response = await fetch(API_URL);
-
-      // HTTP Durum Kodu Kontrolü
-      // response.ok: HTTP durum kodu 200-299 arasındaysa true
-      // Örnek: 200 (OK), 404 (Not Found), 500 (Server Error)
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status}`);
-      }
-
-      // JSON Verisini Parse Et
-      // response.json(): API'den gelen JSON string'ini JavaScript objesine çevirir
-      // db.json'daki users array'ini alır
+      // Api.tsx'ten fetchUsers ile tüm kullanıcıları al
+      const response = await fetchUsers();
       const users = await response.json();
       console.log("Kullanıcılar alındı:", users.length, "kullanıcı");
 
-      // Kullanıcı Arama
-      // users.find(): Array'de koşulu sağlayan ilk elemanı bulur
-      // Email VE password eşleşmesi gerekiyor
+      // Email ve password kontrolü
       const user = users.find(
         (u: any) => u.email === email && u.password === password
       );
 
-      // Giriş Sonucu Kontrolü
       if (user) {
-        // Kullanıcı bulundu → Giriş başarılı
         console.log("Login başarılı!", user);
-        setError("");  // Hata mesajını temizle
-        login();        // AuthContext'teki login() → isLoggedIn = true → Dashboard'a geç
+        setError("");
+        login();
       } else {
-        // Kullanıcı bulunamadı → Email veya şifre yanlış
         setError("Email veya şifre hatalı!");
         console.log("Login başarısız - Kullanıcı bulunamadı");
       }
     } catch (err) {
-      // Hata Yakalama
-      // Olası hatalar:
-      // 1. API çalışmıyor (json-server başlatılmamış)
-      // 2. Network hatası
-      // 3. Yanlış URL (10.0.2.2 yerine localhost kullanılmış)
       setError("Bağlantı hatası! API çalışıyor mu?");
       console.error("API Hatası:", err);
-      console.log("API'ye erişilemiyor. Emulator için 10.0.2.2:3001 kullanın");
     }
   };
 
   /**
    * handleSignup: Yeni kullanıcı kaydı yapan fonksiyon
-   * 
-   * Yapılan İşlemler:
-   * 1. Form validasyonu (boş alan, şifre eşleşmesi, şifre uzunluğu)
-   * 2. API'ye yeni kullanıcı ekler (POST isteği)
-   * 3. Başarılıysa otomatik giriş yapar
+   * Api.tsx'teki createUser fonksiyonunu kullanır
    */
   const handleSignup = async () => {
-    // Validasyon 1: Boş Alan Kontrolü
-    // Tüm alanlar dolu mu kontrol et
+    // Validasyon kontrolü
     if (!email || !password || !confirmPassword) {
       setError("Tüm alanları doldurun!");
-      return;  // Fonksiyondan çık, API isteği gönderme
+      return;
     }
 
-    // Validasyon 2: Şifre Eşleşme Kontrolü
-    // Password ve Confirm Password aynı mı?
     if (password !== confirmPassword) {
       setError("Şifreler eşleşmiyor!");
       return;
     }
 
-    // Validasyon 3: Şifre Uzunluk Kontrolü
-    // Minimum 3 karakter (gerçek uygulamada daha fazla olmalı)
     if (password.length < 3) {
       setError("Şifre en az 3 karakter olmalı!");
       return;
     }
 
     try {
-      // API URL Belirleme (Login ile aynı mantık)
-      const API_URL =
-        Platform.OS === "android"
-          ? "http://10.0.2.2:3001/users"  // Android Emulator
-          : "http://localhost:3001/users"; // iOS Simulator
-
-      // API'ye POST İsteği Gönder
-      // POST: Yeni veri eklemek için kullanılan HTTP metodu
-      // GET: Veri okumak için (handleLogin'de kullandık)
-      // PUT: Veri güncellemek için
-      // DELETE: Veri silmek için
-      const response = await fetch(API_URL, {
-        method: "POST",  // HTTP metodu: POST (yeni kullanıcı ekle)
-        
-        // Headers: İstek başlıkları
-        // Content-Type: Gönderilen verinin formatını belirtir
-        // application/json: JSON formatında veri gönderiyoruz
-        headers: {
-          "Content-Type": "application/json",
-        },
-        
-        // Body: Gönderilecek veri
-        // JSON.stringify(): JavaScript objesini JSON string'ine çevirir
-        // { email: "test@test.com" } → '{"email":"test@test.com"}'
-        body: JSON.stringify({
-          email: email,      // Kullanıcının girdiği email
-          password: password, // Kullanıcının girdiği password
-          // Not: id otomatik json-server tarafından oluşturulur
-        }),
-      });
-
-      // Kayıt Sonucu Kontrolü
-      if (response.ok) {
-        // Kayıt başarılı → db.json'a yeni kullanıcı eklendi
-        console.log("Kayıt başarılı!");
-        setError("");  // Hata mesajını temizle
-        login();        // Otomatik giriş yap (isLoggedIn = true)
-      } else {
-        // Kayıt başarısız → API hata döndü (örn: duplicate email)
-        setError("Kayıt başarısız!");
-      }
+      // Api.tsx'ten createUser ile yeni kullanıcı ekle
+      await createUser({ email, password });
+      console.log("Kayıt başarılı!");
+      setError("");
+      login(); // Otomatik giriş yap
     } catch (err) {
-      // Hata Yakalama
-      // API'ye erişim hatası (network, server kapalı vb.)
-      setError("Bağlantı hatası!");
+      setError("Kayıt başarısız!");
       console.error("API Hatası:", err);
     }
   };
@@ -264,7 +178,7 @@ export const AuthScreen = () => {
                         {
                           translateX: slideAnim.interpolate({
                             inputRange: [0, 1],
-                            outputRange: [0, 180], // Adjust based on your button width
+                            outputRange: [8, 170], // Sol: 8px padding, Sağ: (container genişliği/2) + 8px
                           }),
                         },
                       ],
@@ -435,10 +349,11 @@ const styles = StyleSheet.create({
   },
   activeIndicator: {
     height: 3,
-    width: 160,
+    width: "50%", // Her tab butonunun genişliği kadar (flex:1 ile eşit paylaşılmış)
     backgroundColor: "#6366F1",
     borderRadius: 2,
     marginBottom: 24,
+    marginLeft: -3, // TabContainer'ın padding'ini dengelemek için
   },
   header: {
     marginBottom: 32,

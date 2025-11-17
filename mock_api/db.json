@@ -1,13 +1,13 @@
 {
   "domains": [
     {
-      "id": 1,
+      "id": "1",
       "domain_name": "google.com",
       "provider": "GoDaddy",
       "expiration_date": "2025-12-01T10:00:00.000Z"
     },
     {
-      "id": 2,
+      "id": "2",
       "domain_name": "reactnative.dev",
       "provider": "Namecheap",
       "expiration_date": "2026-02-15T14:30:00.000Z"
@@ -15,7 +15,7 @@
   ],
   "tasks": [
     {
-      "id": 1,
+      "id": "1",
       "title": "google.com faturasını öde",
       "category_id": 1,
       "due_date": "2025-11-20T18:00:00.000Z",
@@ -24,18 +24,29 @@
   ],
   "users": [
     {
-      "id": 1,
+      "id": "1",
       "email": "test@test.com",
+      "password": "123"
+    },
+    {
+      "id": "6470",
+      "email": "selam@gmail.com",
       "password": "123"
     }
   ],
   "categories": [
-    { "id": 1, "name": "Faturalar" },
-    { "id": 2, "name": "Acil" }
+    {
+      "id": "1",
+      "name": "Faturalar"
+    },
+    {
+      "id": "2",
+      "name": "Acil"
+    }
   ],
   "credentials": [
     {
-      "id": 1,
+      "id": "1",
       "service_name": "google.com WP Admin",
       "username": "admin",
       "password": "BuSifreFakeOlmali_123"
