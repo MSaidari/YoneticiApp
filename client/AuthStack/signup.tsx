@@ -135,7 +135,7 @@ export const Signup = () => {
                       placeholderTextColor="#94A3B8"
                       style={styles.input}
                       secureTextEntry
-                      value={password}
+                      value={password} 
                       onChangeText={setPassword}
                       editable={true}
                       selectTextOnFocus={true}

@@ -17,9 +17,17 @@
     {
       "id": "1",
       "title": "google.com faturasını öde",
-      "category_id": 1,
+      "status": "progress",
       "due_date": "2025-11-20T18:00:00.000Z",
-      "is_completed": false
+      "priority": "high"
+    },
+    {
+      "id": "1763646150886",
+      "title": "deneme",
+      "description": "deneme1",
+      "status": "progress",
+      "priority": "medium",
+      "due_date": "2025-11-20T13:42:30.886Z"
     }
   ],
   "users": [

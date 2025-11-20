@@ -17,6 +17,7 @@ import AntDesign from "@expo/vector-icons/AntDesign";
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { style } from "../Styles/style";
+import { fetchUsers } from "../Components/Api";
 
 export const Login = () => {
   const { login, goToSignup } = useAuth();
@@ -29,17 +30,7 @@ export const Login = () => {
       // API'den kullanıcıları al
       // Android Emulator için 10.0.2.2, iOS Simulator için localhost
       // Fiziksel cihaz için bilgisayarın IP'sini kullan (örn: 192.168.1.x)
-      const API_URL =
-        Platform.OS === "android"
-          ? "http://10.0.2.2:3001/users" // Android Emulator
-          : "http://localhost:3001/users"; // iOS Simulator
-
-      console.log("API'ye bağlanılıyor:", API_URL);
-      const response = await fetch(API_URL);
-
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status}`);
-      }
+      const response = await fetchUsers();
 
       const users = await response.json();
       console.log("Kullanıcılar alındı:", users.length, "kullanıcı");
