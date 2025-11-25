@@ -15,19 +15,12 @@
   ],
   "tasks": [
     {
-      "id": "1",
-      "title": "google.com faturasını öde",
-      "status": "progress",
-      "due_date": "2025-11-20T18:00:00.000Z",
-      "priority": "high"
-    },
-    {
-      "id": "1763646150886",
-      "title": "deneme",
-      "description": "deneme1",
-      "status": "progress",
+      "id": "1764060389739",
+      "title": "deneeme2",
+      "description": "",
+      "status": "todo",
       "priority": "medium",
-      "due_date": "2025-11-20T13:42:30.886Z"
+      "due_date": "2025-11-25T08:46:29.739Z"
     }
   ],
   "users": [
@@ -57,7 +50,16 @@
       "id": "1",
       "service_name": "google.com WP Admin",
       "username": "admin",
-      "password": "BuSifreFakeOlmali_123"
+      "password": "123"
+    }
+  ],
+  "passwords": [
+    {
+      "id": "1",
+      "sunucu": "diademo",
+      "user code": "demo",
+      "password": "demo",
+      "hour_remaining": "3"
     }
   ]
 }

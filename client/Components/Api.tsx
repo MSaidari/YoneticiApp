@@ -105,4 +105,75 @@ export const addTask = async (data: {
     throw error;
   }
 };
-  
+
+//Destek şifrelerini çekme
+export const fetchPasswords = async () => {
+  try {
+    const response = await fetch(URL + "passwords");
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    console.error("Şifreleri alma hatası:", error);
+    throw error;
+  }
+};
+
+//destek şifrelerini post etme
+export const addPassword = async (data: { password: string; Id: number;  hour_remaining: (number|any) }) => {
+  try {
+    const response = await fetch(URL + "passwords", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    console.error("Şifre ekleme hatası:", error);
+    throw error;
+  }
+};
+
+export const deletetask = async (id: number | string) => {
+  try {
+    const response = await fetch(URL + `tasks/${id}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    console.error("Görev silme hatası:", error);
+    throw error;
+  }
+};
+
+const edittask = async (id: number | string, data: {
+  title?: string;
+  description?: string;
+  status?: "todo" | "progress" | "done";
+  priority?: "low" | "medium" | "high";
+  due_date?: string;
+}) => {
+  try {
+    const response = await fetch(URL + `tasks/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    } 
+    return response;
+  } catch (error) {
+    console.error("Görev güncelleme hatası:", error);
+    throw error;
+  }
+};
+
+export default edittask;

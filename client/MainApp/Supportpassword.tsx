@@ -8,50 +8,47 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { fetchtasks, addTask, deletetask } from "../Components/Api";
-import edittask  from "../Components/Api";
-import { TaskCard } from "../Components/TaskCard";
-import { TaskAddModal } from "./TaskAddModal";
-import { AddButton } from "../Components/addmodal";
+import { fetchtasks, addTask,fetchPasswords } from "../Components/Api";
+import { PasswordCard } from "../Components/passwordcard";
 
-export const TaskListScreen = () => {
+export const SupportPassword = () => {
   // State'ler:
   // tasks: API'den çekilen görevlerin listesi
-  const [tasks, setTasks] = useState([]);
-
+  const [passwords, setPasswords] = useState([]);
+  
   // loading: Veriler yüklenirken gösterilecek
   const [loading, setLoading] = useState(true);
-
+  
   // error: Hata durumunda mesaj göstermek için
   const [error, setError] = useState("");
-
-  // modalVisible: Görev ekleme modalının açık/kapalı durumu
-  const [modalVisible, setModalVisible] = useState(false);
   
-  // editingTask: Düzenlenen görev (null ise add modu, dolu ise edit modu)
-  const [editingTask, setEditingTask] = useState<any>(null);
 
   /**
-   * handleFetchTasks: API'den görevleri çeker
-   * - fetchtasks() fonksiyonunu çağırır (Api.tsx'ten)
+   * handleFetchPasswords: API'den şifreleri çeker
+   * - fetchPasswords() fonksiyonunu çağırır (Api.tsx'ten)
    * - Response'u JSON'a parse eder
-   * - tasks state'ine set eder
+   * - passwords state'ine set eder
    * - Loading ve error state'lerini yönetir
    */
-  const handleFetchTasks = async () => {
+  const handleFetchpassword = async () => {
     try {
       setLoading(true); // Yükleme başladı
       setError(""); // Önceki hataları temizle
-
-      // API'den görevleri çek
-      const response = await fetchtasks();
-
+      
+      // API'den şifreleri çek
+      const response = await fetchPasswords();
+      
+      // Response kontrolü
+      if (!response.ok) {
+        throw new Error("Şifreler yüklenemedi");
+      }
+      
       // JSON'a parse et
       const tasksData = await response.json();
-
+      
       // State'e kaydet
-      setTasks(tasksData);
-
+      setPasswords(tasksData);
+      
       console.log("Görevler başarıyla yüklendi:", tasksData.length, "görev");
     } catch (error) {
       console.error("Görevleri alma hatası:", error);
@@ -68,44 +65,38 @@ export const TaskListScreen = () => {
    * - [] dependency array → Sadece ilk render'da çalışır
    */
   useEffect(() => {
-    handleFetchTasks();
+    handleFetchpassword();
   }, []); // Boş array = sadece ilk yüklemede çalış
 
   /**
-   * handleSaveTask: Görev ekler veya günceller
-   * - Eğer editingTask varsa → PUT (güncelleme)
-   * - Eğer editingTask yoksa → POST (yeni ekleme)
+   * handleAddTask: Yeni görev ekler
+   * - API'ye POST isteği yapar
+   * - Başarılı olursa listeyi yeniden çeker
+   * - Modal'ı kapatır
    */
-  const handleSaveTask = async (taskData: any) => {
+  /*
+  const handleAddpassword = async (newTask: any) => {
     try {
-      let response;
+      // API'ye gönder
+      const response = await addTask(newTask);
       
-      if (editingTask) {
-        // Edit modu: Mevcut görevi güncelle
-        response = await edittask(taskData.id, taskData);
-        console.log("Görev başarıyla güncellendi");
-      } else {
-        // Add modu: Yeni görev ekle
-        response = await addTask(taskData);
-        console.log("Görev başarıyla eklendi");
-      }
-
       if (!response.ok) {
-        throw new Error(editingTask ? "Görev güncellenemedi" : "Görev eklenemedi");
+        throw new Error("Görev eklenemedi");
       }
-
+      
+      console.log("Görev başarıyla eklendi");
+      
       // Listeyi yenile
       await handleFetchTasks();
-
-      // Modal'ı kapat ve editingTask'i temizle
+      
+      // Modal'ı kapat
       setModalVisible(false);
-      setEditingTask(null);
     } catch (error) {
-      console.error("Görev kaydetme hatası:", error);
-      alert(editingTask ? "Görev güncellenirken bir hata oluştu" : "Görev eklenirken bir hata oluştu");
+      console.error("Görev ekleme hatası:", error);
+      alert("Görev eklenirken bir hata oluştu");
     }
   };
-
+  */
   /**
    * renderTaskItem: FlatList için her görev kartını render eder
    * - item: Görev objesi
@@ -113,22 +104,12 @@ export const TaskListScreen = () => {
    * - due_date veya createdAt varsa göster (hangisi varsa)
    */
   const renderTaskItem = ({ item }: any) => (
-    <TaskCard
+    <PasswordCard
       id={item.id}
-      title={item.title}
-      status={item.status}
-      priority={item.priority}
-      createdAt={item.due_date || item.createdAt}
-      onEdit={() => {
-        // Edit modunu aktif et ve modalı aç
-        setEditingTask(item);
-        setModalVisible(true);
-      }}
-      onDelete={() => {
-        deletetask(item.id);
-        handleFetchTasks();
-      }}
-      onPress={() => console.log("Görev detayı:", item.id)}
+      server={item.server}
+      username={item.username}
+      password={item.password}
+      hour={item.hour}
     />
   );
 
@@ -139,7 +120,6 @@ export const TaskListScreen = () => {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#6366F1" />
-        <Text style={styles.loadingText}>Görevler yükleniyor...</Text>
       </View>
     );
   }
@@ -151,9 +131,6 @@ export const TaskListScreen = () => {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <Text style={styles.errorHint}>
-          API'nin çalıştığından emin olun (mock_api)
-        </Text>
       </View>
     );
   }
@@ -161,7 +138,7 @@ export const TaskListScreen = () => {
   /**
    * Empty State: Görev listesi boşsa gösterilir
    */
-  if (tasks.length === 0) {
+  if (passwords.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -169,43 +146,24 @@ export const TaskListScreen = () => {
           <Text style={styles.headerSubtitle}>0 görev</Text>
         </View>
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyText}>Henüz görev yok</Text>
+          <Text style={styles.emptyText}>Henüz Şifre eklenmedi.</Text>
           <Text style={styles.emptyHint}>
-            Yeni görev eklemek için + butonuna tıklayın
+            Liste şuanda boş. Destek şifrelerini ekleyin.
           </Text>
         </View>
-        {/* AddButton ve Modal'ı buraya da ekle */}
-        <AddButton 
-          onPress={() => {
-            setEditingTask(null); // Add modu
-            setModalVisible(true);
-          }} 
-        />
-        <TaskAddModal
-          visible={modalVisible}
-          onClose={() => {
-            setModalVisible(false);
-            setEditingTask(null);
-          }}
-          onSave={handleSaveTask}
-          editTask={editingTask}
-        />
       </View>
     );
   }
 
   /**
-   * Success State: Görevler başarıyla yüklendiyse gösterilir
+   * Success State: şifreler başarıyla yüklendiyse gösterilir
    */
   return (
     <View style={styles.container}>
       {/* Header: Başlık + istatistikler */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Görevlerim</Text>
-        <Text style={styles.headerSubtitle}>
-          {tasks.length} görev •{" "}
-          {tasks.filter((t: any) => t.status === "done").length} tamamlandı
-        </Text>
+        <Text style={styles.headerTitle}>Destek Şifreleri</Text>
+        
       </View>
 
       {/* FlatList: Görev kartlarının listesi */}
@@ -217,33 +175,13 @@ export const TaskListScreen = () => {
         - showsVerticalScrollIndicator: Scroll bar göster/gizle
       */}
       <FlatList
-        data={tasks}
+        data={passwords}
         renderItem={renderTaskItem}
-        keyExtractor={(item: any) =>
-          item.id?.toString() || String(Math.random())
-        }
+        keyExtractor={(item: any) => item.id?.toString() || String(Math.random())}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       />
 
-      {/* Floating Action Button: + butonu (Görev Ekle) */}
-
-      {/* Görev Ekleme/Düzenleme Modal'ı */}
-      <AddButton 
-        onPress={() => {
-          setEditingTask(null); // Add modu (editingTask null olmalı)
-          setModalVisible(true);
-        }} 
-      />
-      <TaskAddModal
-        visible={modalVisible}
-        onClose={() => {
-          setModalVisible(false);
-          setEditingTask(null); // Modal kapanınca editingTask'i temizle
-        }}
-        onSave={handleSaveTask}
-        editTask={editingTask} // Edit modunda görev verisini gönder
-      />
     </View>
   );
 };

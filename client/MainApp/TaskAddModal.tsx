@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,24 +12,27 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 
 /**
- * TaskAddModal: Görev ekleme modal component'i
+ * TaskAddModal: Görev ekleme/düzenleme modal component'i
  * 
  * Props:
  * - visible: Modal açık/kapalı durumu
  * - onClose: Modal kapatma fonksiyonu
- * - onSave: Görev kaydetme fonksiyonu (yeni görev objesini alır)
+ * - onSave: Görev kaydetme fonksiyonu (görev objesini alır)
+ * - editTask: Düzenlenecek görev (opsiyonel - varsa edit modu)
  */
 
 interface TaskAddModalProps {
   visible: boolean;
   onClose: () => void;
   onSave: (task: any) => void;
+  editTask?: any; // Düzenlenecek görev objesi (opsiyonel)
 }
 
 export const TaskAddModal: React.FC<TaskAddModalProps> = ({
   visible,
   onClose,
   onSave,
+  editTask,
 }) => {
   // Form state'leri
   const [title, setTitle] = useState("");
@@ -38,7 +41,27 @@ export const TaskAddModal: React.FC<TaskAddModalProps> = ({
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
 
   /**
+   * useEffect: editTask prop'u değiştiğinde formu doldur
+   * - Eğer editTask varsa (edit modu) form alanlarını doldur
+   * - Eğer editTask yoksa (add modu) formu temizle
+   */
+  useEffect(() => {
+    if (editTask) {
+      // Edit modu: Formu doldur
+      setTitle(editTask.title || "");
+      setDescription(editTask.description || "");
+      setStatus(editTask.status || "todo");
+      setPriority(editTask.priority || "medium");
+    } else {
+      // Add modu: Formu temizle
+      handleClear();
+    }
+  }, [editTask, visible]); // editTask veya visible değişince çalış
+
+  /**
    * handleSave: Form verilerini kontrol edip kaydeder
+   * - Edit modunda: Mevcut görevin ID'sini korur
+   * - Add modunda: Yeni ID oluşturur
    */
   const handleSave = () => {
     // Validasyon: Başlık boş olamaz
@@ -47,18 +70,18 @@ export const TaskAddModal: React.FC<TaskAddModalProps> = ({
       return;
     }
 
-    // Yeni görev objesi oluştur
-    const newTask = {
-      id: Date.now().toString(), // Benzersiz ID
+    // Görev objesi oluştur (edit veya add)
+    const taskData = {
+      id: editTask?.id || Date.now().toString(), // Edit modunda mevcut ID, add modunda yeni ID
       title: title.trim(),
       description: description.trim(),
       status,
       priority,
-      due_date: new Date().toISOString(), // Şu anki tarih
+      due_date: editTask?.due_date || new Date().toISOString(), // Edit modunda mevcut tarih, add modunda yeni tarih
     };
 
     // Parent component'e gönder
-    onSave(newTask);
+    onSave(taskData);
 
     // Formu temizle
     handleClear();
@@ -97,7 +120,9 @@ export const TaskAddModal: React.FC<TaskAddModalProps> = ({
             <View style={styles.modalContent}>
               {/* Modal Header */}
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Yeni Görev Ekle</Text>
+                <Text style={styles.modalTitle}>
+                  {editTask ? "Görevi Düzenle" : "Yeni Görev Ekle"}
+                </Text>
                 <TouchableOpacity onPress={handleClose}>
                   <Ionicons name="close" size={24} color="#64748B" />
                 </TouchableOpacity>
@@ -259,7 +284,9 @@ export const TaskAddModal: React.FC<TaskAddModalProps> = ({
                   style={styles.saveButton}
                   onPress={handleSave}
                 >
-                  <Text style={styles.saveButtonText}>Kaydet</Text>
+                  <Text style={styles.saveButtonText}>
+                    {editTask ? "Güncelle" : "Kaydet"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
