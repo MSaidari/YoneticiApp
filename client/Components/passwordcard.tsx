@@ -1,16 +1,28 @@
 import React, { useState } from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from 'expo-clipboard';
 
 /**
- * PasswordCard: Şifre bilgilerini gösteren kart component'i
+ * PasswordCard: Destek şifre bilgilerini gösteren kart component'i
+ * 
+ * Kütüphaneler:
+ * - React: Component yapısı ve useState hook'u için
+ * - react-native: View, Text, TouchableOpacity, StyleSheet gibi temel componentler
+ * - @expo/vector-icons: Ionicons icon seti
+ * - expo-clipboard: Panoya kopyalama işlemi için
+ * 
+ * Özellikler:
+ * - Şifre görünürlük toggle'ı (göz ikonu ile)
+ * - Sunucu, user_code ve şifre için kopyalama butonu
+ * - Kalan saat bilgisi gösterimi (renkli badge ile)
  * 
  * Props:
  * - id: Şifre ID'si
  * - server: Sunucu/Servis adı (örn: "google.com Admin Panel")
- * - username: Kullanıcı adı
+ * - user_code: Kullanıcı kodu
  * - password: Şifre
- * - createdAt: Oluşturma tarihi (opsiyonel)
+ * - hour: Kalan saat sayısı
  * - onEdit: Düzenleme butonu fonksiyonu (opsiyonel)
  * - onDelete: Silme butonu fonksiyonu (opsiyonel)
  * - onPress: Kart tıklama fonksiyonu (opsiyonel)
@@ -19,7 +31,7 @@ import { Ionicons } from "@expo/vector-icons";
 interface PasswordCardProps {
   id: number | string;
   server: string;
-  username: string;
+  user_code: string;
   password: string;
   hour: number;
   onEdit?: () => void;
@@ -30,9 +42,9 @@ interface PasswordCardProps {
 export const PasswordCard: React.FC<PasswordCardProps> = ({
   id,
   server,
-  username,
+  user_code,
   password,
-  createdAt,
+  hour,
   onEdit,
   onDelete,
   onPress,
@@ -41,23 +53,32 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   /**
-   * handleCopyPassword: Şifreyi panoya kopyalar
+   * handleCopyToClipboard: Verilen metni panoya kopyalar
+   * @param text - Kopyalanacak metin
+   * @param label - Kullanıcıya gösterilecek etiket (örn: "Sunucu", "Şifre")
    */
-  const handleCopyPassword = () => {
-    // React Native'de Clipboard API kullanılır
-    // import { Clipboard } from 'react-native'; gerekir
-    console.log("Şifre kopyalandı:", password);
-    // Clipboard.setString(password);
-    // Alert.alert("Başarılı", "Şifre panoya kopyalandı");
+  const handleCopyToClipboard = async (text: string, label: string) => {
+    try {
+      await Clipboard.setStringAsync(text);
+    } catch (error) {
+      Alert.alert("Hata", "Kopyalama işlemi başarısız oldu");
+    }
   };
 
   /**
-   * handleCopyUsername: Kullanıcı adını panoya kopyalar
+   * getHourStyle: Kalan saate göre renk döndürür
+   * 24+ saat: Yeşil
+   * 12-24 saat: Sarı
+   * 0-12 saat: Kırmızı (kritik)
    */
-  const handleCopyUsername = () => {
-    console.log("Kullanıcı adı kopyalandı:", username);
-    // Clipboard.setString(username);
-    // Alert.alert("Başarılı", "Kullanıcı adı panoya kopyalandı");
+  const getHourStyle = () => {
+    if (hour >= 24) {
+      return { color: "#10B981", backgroundColor: "#D1FAE5" }; // Yeşil
+    } else if (hour >= 12) {
+      return { color: "#F59E0B", backgroundColor: "#FEF3C7" }; // Sarı
+    } else {
+      return { color: "#EF4444", backgroundColor: "#FEE2E2" }; // Kırmızı
+    }
   };
 
   // Card Container: Eğer onPress varsa TouchableOpacity, yoksa View
@@ -74,27 +95,24 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
         <Ionicons name="key" size={24} color="#6366F1" />
       </View>
 
-      {/* Orta kısım: Servis adı, kullanıcı adı, şifre */}
+      {/* Orta kısım: Sunucu, user_code, şifre, kalan saat */}
       <View style={styles.content}>
-        {/* Servis Adı */}
-        <Text style={styles.serverName} numberOfLines={1}>
-          {server}
-        </Text>
-
-        {/* Kullanıcı Adı */}
+        {/* Sunucu Adı */}
         <View style={styles.infoRow}>
-          <Ionicons name="person-outline" size={14} color="#64748B" />
+          <Ionicons name="server-outline" size={14} color="#64748B" />
           <Text style={styles.infoText} numberOfLines={1}>
-            {username}
+            {server}
           </Text>
           <TouchableOpacity
-            onPress={handleCopyUsername}
+            onPress={() => handleCopyToClipboard(server, "Sunucu")}
             style={styles.copyButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons name="copy-outline" size={14} color="#64748B" />
           </TouchableOpacity>
         </View>
+
+        
 
         {/* Şifre */}
         <View style={styles.infoRow}>
@@ -118,7 +136,7 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
 
           {/* Şifre Kopyala */}
           <TouchableOpacity
-            onPress={handleCopyPassword}
+            onPress={() => handleCopyToClipboard(password, "Şifre")}
             style={styles.copyButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
@@ -126,15 +144,15 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Tarih (varsa) */}
-        {createdAt && (
-          <View style={styles.dateContainer}>
-            <Ionicons name="calendar-outline" size={12} color="#94A3B8" />
-            <Text style={styles.dateText}>
-              {new Date(createdAt).toLocaleDateString("tr-TR")}
+        {/* Kalan Saat */}
+        <View style={styles.hourContainer}>
+          <Ionicons name="time-outline" size={14} color={getHourStyle().color} />
+          <View style={[styles.hourBadge, { backgroundColor: getHourStyle().backgroundColor }]}>
+            <Text style={[styles.hourText, { color: getHourStyle().color }]}>
+              {hour <= 0 ? "Süresi Doldu" : `${hour} saat kaldı`}
             </Text>
           </View>
-        )}
+        </View>
       </View>
 
       {/* Sağ tarafta action butonları */}
@@ -189,18 +207,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginRight: 12,
   },
-  // Content: Orta kısım (servis, username, password)
+  // Content: Orta kısım (sunucu, user_code, password, hour)
   content: {
     flex: 1,
     gap: 8,
   },
-  serverName: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#1E293B",
-    marginBottom: 4,
-  },
-  // Info Row: Username ve Password satırları
+  // Info Row: Sunucu, user_code ve şifre satırları
   infoRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -224,16 +236,21 @@ const styles = StyleSheet.create({
   eyeButton: {
     padding: 4,
   },
-  // Date
-  dateContainer: {
+  // Hour: Kalan saat container ve badge
+  hourContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
     marginTop: 4,
   },
-  dateText: {
-    fontSize: 11,
-    color: "#94A3B8",
+  hourBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  hourText: {
+    fontSize: 12,
+    fontWeight: "600",
   },
   // Action Buttons: Edit/Delete butonları
   actionButtons: {

@@ -177,3 +177,47 @@ const edittask = async (id: number | string, data: {
 };
 
 export default edittask;
+
+export const fetchdomanins = async () => {
+  try {
+
+    const response = await fetch(URL + "domains");
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    console.error("Domainleri alma hatası:", error);
+    throw error;
+  }
+}
+
+export const deletedomain = async (id: number | string) => {
+  try {
+    const response = await fetch(URL + `domains/${id}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    console.error("Domain silme hatası:", error);
+    throw error;
+  }
+};
+
+export const deletePwassword = async (id: number | string) => {
+  try {
+    const response = await fetch(URL + `passwords/${id}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    console.error("Şifre silme hatası:", error);
+    throw error;
+  }
+}

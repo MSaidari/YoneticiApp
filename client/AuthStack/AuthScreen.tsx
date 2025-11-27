@@ -70,6 +70,15 @@ export const AuthScreen = () => {
   };
 
   /**
+   * handleQuickLogin: Hızlı giriş (email/password gerekmez)
+   */
+  const handleQuickLogin = () => {
+    console.log("Hızlı giriş - Doğrudan giriş yapılıyor");
+    setError("");
+    login();
+  };
+
+  /**
    * handleSignup: Yeni kullanıcı kaydı yapan fonksiyon
    * Api.tsx'teki createUser fonksiyonunu kullanır
    */
@@ -279,6 +288,18 @@ export const AuthScreen = () => {
                     {activeTab === "signin" ? "Sign In" : "Sign Up"}
                   </Text>
                 </TouchableOpacity>
+
+                {/* Quick Login Button (Only for Sign In) */}
+                {activeTab === "signin" && (
+                  <TouchableOpacity
+                    style={styles.quickLoginButton}
+                    onPress={handleQuickLogin}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name="flash" size={18} color="#10B981" style={{ marginRight: 8 }} />
+                    <Text style={styles.quickLoginButtonText}>Hızlı Giriş</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </ScrollView>
@@ -403,6 +424,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
+    marginBottom: 12,
   },
   submitButtonSignup: {
     backgroundColor: "#10B981",
@@ -411,6 +433,22 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+  quickLoginButton: {
+    backgroundColor: "#F0FDF4",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#10B981",
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  quickLoginButtonText: {
+    color: "#10B981",
+    fontSize: 15,
     fontWeight: "bold",
     letterSpacing: 0.5,
   },

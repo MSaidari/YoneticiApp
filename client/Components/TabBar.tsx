@@ -3,8 +3,7 @@ import { useLinkBuilder, useTheme } from '@react-navigation/native';
 import { Text, PlatformPressable } from '@react-navigation/elements';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Dashboard } from '../MainApp/DashboardScreen';
-import { domainadd } from '../MainApp/DomainAddEditScreen';
-import { DomainListScreen } from "../MainApp/DomainListScreen";
+import { DomainListScreen } from '../MainApp/DomainListScreen';
 import { TaskListScreen } from '../MainApp/TaskListScreen';
 import { SupportPassword} from "../MainApp/Supportpassword";
 
@@ -82,7 +81,7 @@ export function MainAppTabs() {
       }}
     >
       <Tab.Screen name="Dashboard" component={Dashboard} />
-      <Tab.Screen name="Domain" component={domainadd} />
+      <Tab.Screen name="Domain" component={DomainListScreen} />
       <Tab.Screen name="Görev" component={TaskListScreen} />
       <Tab.Screen name='Sifre Destek' component={SupportPassword} />
     </Tab.Navigator>

@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { fetchtasks, addTask,fetchPasswords } from "../Components/Api";
+import { fetchtasks, addTask,fetchPasswords, deletePwassword } from "../Components/Api";
 import { PasswordCard } from "../Components/passwordcard";
 
 export const SupportPassword = () => {
@@ -44,15 +44,15 @@ export const SupportPassword = () => {
       }
       
       // JSON'a parse et
-      const tasksData = await response.json();
+      const passwordsData = await response.json();
       
       // State'e kaydet
-      setPasswords(tasksData);
+      setPasswords(passwordsData);
       
-      console.log("Görevler başarıyla yüklendi:", tasksData.length, "görev");
+      console.log("Şifreler başarıyla yüklendi:", passwordsData.length, "şifre");
     } catch (error) {
-      console.error("Görevleri alma hatası:", error);
-      setError("Görevler yüklenirken bir hata oluştu");
+      console.error("Şifreleri alma hatası:", error);
+      setError("Şifreler yüklenirken bir hata oluştu");
     } finally {
       // Her durumda loading'i false yap (try veya catch'ten sonra)
       setLoading(false);
@@ -67,6 +67,50 @@ export const SupportPassword = () => {
   useEffect(() => {
     handleFetchpassword();
   }, []); // Boş array = sadece ilk yüklemede çalış
+
+  /**
+   * useEffect: Süresi dolmuş şifreleri otomatik siler
+   * - Her 1 saatte bir kontrol eder
+   * - hour <= 0 olan şifreleri bulur ve DB'den siler
+   */
+  useEffect(() => {
+    const checkAndDeleteExpiredPasswords = async () => {
+      // Süresi dolmuş şifreleri bul
+      const expiredPasswords = passwords.filter((p: any) => {
+        const hour = parseInt(p.hour_remaining) || 0;
+        return hour <= 0;
+      });
+
+      // Eğer süresi dolmuş şifre varsa sil
+      if (expiredPasswords.length > 0) {
+        console.log(`${expiredPasswords.length} süresi dolmuş şifre siliniyor...`);
+        
+        for (const password of expiredPasswords) {
+          try {
+            await deletePwassword((password as any).id);
+            console.log(`Şifre DB'den silindi: ${(password as any).id}`);
+          } catch (error) {
+            console.error(`Şifre silme hatası (${(password as any).id}):`, error);
+          }
+        }
+        
+        // Listeyi yenile
+        await handleFetchpassword();
+      }
+    };
+
+    // İlk yükleme kontrolü
+    if (passwords.length > 0) {
+      checkAndDeleteExpiredPasswords();
+    }
+
+    // 1 saatte bir kontrol et (3600000 ms = 1 saat)
+    const interval = setInterval(checkAndDeleteExpiredPasswords, 3600000);
+
+    // Cleanup: Component unmount olduğunda interval'i temizle
+    return () => clearInterval(interval);
+  }, [passwords]); // passwords değiştiğinde yeniden çalış
+
 
   /**
    * handleAddTask: Yeni görev ekler
@@ -98,18 +142,17 @@ export const SupportPassword = () => {
   };
   */
   /**
-   * renderTaskItem: FlatList için her görev kartını render eder
-   * - item: Görev objesi
-   * - TaskCard component'ine props olarak gönderir
-   * - due_date veya createdAt varsa göster (hangisi varsa)
+   * renderTaskItem: FlatList için her şifre kartını render eder
+   * - item: Şifre objesi (id, server, user_code, password, hour)
+   * - PasswordCard component'ine props olarak gönderir
    */
   const renderTaskItem = ({ item }: any) => (
     <PasswordCard
       id={item.id}
-      server={item.server}
-      username={item.username}
+      server={item.sunucu}
+      user_code={item.user_code}
       password={item.password}
-      hour={item.hour}
+      hour={parseInt(item.hour_remaining) || 0}
     />
   );
 

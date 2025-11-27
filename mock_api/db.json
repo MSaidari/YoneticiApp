@@ -1,26 +1,44 @@
 {
   "domains": [
     {
-      "id": "1",
-      "domain_name": "google.com",
-      "provider": "GoDaddy",
-      "expiration_date": "2025-12-01T10:00:00.000Z"
+      "id": "1dc5",
+      "domain": "deneme.com",
+      "provider": "namecheep",
+      "date": "2025-31-12",
+      "userId": 1
     },
     {
-      "id": "2",
-      "domain_name": "reactnative.dev",
-      "provider": "Namecheap",
-      "expiration_date": "2026-02-15T14:30:00.000Z"
+      "id": "4fa8",
+      "domain": "ornekdomain",
+      "provider": "GoDaddy",
+      "date": "2026-02-13",
+      "userId": 1
     }
   ],
   "tasks": [
     {
-      "id": "1764060389739",
-      "title": "deneeme2",
+      "id": "1764231997304",
+      "title": "api entegrasyonu yap",
       "description": "",
       "status": "todo",
       "priority": "medium",
-      "due_date": "2025-11-25T08:46:29.739Z"
+      "due_date": "2025-11-27T08:26:37.304Z"
+    },
+    {
+      "id": "1764254266194",
+      "title": "fyjf",
+      "description": "gylylu",
+      "status": "progress",
+      "priority": "medium",
+      "due_date": "2025-11-27T14:37:46.194Z"
+    },
+    {
+      "id": "1764254511226",
+      "title": "hfjtfj",
+      "description": "ftkfk",
+      "status": "done",
+      "priority": "medium",
+      "due_date": "2025-11-27T14:41:51.226Z"
     }
   ],
   "users": [
@@ -33,6 +51,11 @@
       "id": "6470",
       "email": "selam@gmail.com",
       "password": "123"
+    },
+    {
+      "id": "e32f",
+      "email": "deneme2@gmail.com",
+      "password": "1111"
     }
   ],
   "categories": [
@@ -57,7 +80,14 @@
     {
       "id": "1",
       "sunucu": "diademo",
-      "user code": "demo",
+      "user_code": "demo",
+      "password": "demo",
+      "hour_remaining": "3"
+    },
+    {
+      "id": "2",
+      "sunucu": "dia",
+      "user_code": "demo",
       "password": "demo",
       "hour_remaining": "3"
     }

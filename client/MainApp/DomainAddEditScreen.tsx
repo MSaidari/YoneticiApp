@@ -13,7 +13,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"; // Icon kütüphanesi (FontAwesome, Material Icons gibi binlerce icon içerir)
 import { addDomain } from "../Components/Api"; // API işlemleri için custom fonksiyonumuz
 
-export const domainadd = () => {
+export const domainadd = ({ navigation }: any) => {
   // useState: React Hook - Component state'i yönetir
   // [değişken, değiştirme fonksiyonu] = useState(başlangıç değeri)
   const [domainName, setDomainName] = useState(""); // Domain adı state'i
@@ -232,6 +232,26 @@ export const domainadd = () => {
                 Domain kaydı oluşturulduktan sonra listede görüntülenecektir.
               </Text>
             </View>
+          </View>
+          {/* Domain listesini çağırmak için buton */}
+          <View>
+            <TouchableOpacity
+              style={{
+                width: 200,
+                height: 50,
+                backgroundColor: "#6366F1",
+                justifyContent: "center",
+                alignItems: "center",
+                borderRadius: 10,
+                marginTop: 20,
+                flexDirection: "row",
+                gap: 8,
+              }}
+              onPress={() => navigation.navigate("DomainList")}
+            >
+              <Ionicons name="list-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.saveButtonText}>Liste</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
