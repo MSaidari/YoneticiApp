@@ -1,10 +1,7 @@
 import { Platform } from "react-native";
 
 // API URL'ini belirle (Android emulator vs iOS simulator)
-const URL =
-  Platform.OS === "android"
-    ? "http://10.0.2.2:3001/" // Android için özel IP
-    : "http://localhost:3001/";
+const URL = "https://my-json-server.typicode.com/MSaidari/YoneticiApp/";
 
 // ============================================================================
 // KULLANICI YÖNETİMİ
