@@ -9,20 +9,30 @@ import React, { createContext, useState, useContext, ReactNode } from 'react';
  * - Örnek: Kullanıcı giriş yapınca, tüm uygulama bu durumu bilir
  */
 
+// Kullanıcı bilgileri tipi
+type User = {
+  id: number;
+  email: string;
+  name: string;
+  password: string;
+};
+
 // AuthContext'in sağlayacağı değerlerin tipi
 type AuthContextType = {
-  isLoggedIn: boolean;     // Kullanıcı giriş yaptı mı? (true/false)
-  showSignup: boolean;     // Signup ekranı gösterilsin mi?
-  login: () => void;       // Giriş yapma fonksiyonu
-  logout: () => void;      // Çıkış yapma fonksiyonu
-  goToSignup: () => void;  // Signup ekranına git
-  goToLogin: () => void;   // Login ekranına git
+  isLoggedIn: boolean;          // Kullanıcı giriş yaptı mı? (true/false)
+  showSignup: boolean;          // Signup ekranı gösterilsin mi?
+  currentUser: User | null;     // Şu anki kullanıcı bilgileri
+  login: (user: User) => void;  // Giriş yapma fonksiyonu (kullanıcı bilgisiyle)
+  logout: () => void;           // Çıkış yapma fonksiyonu
+  goToSignup: () => void;       // Signup ekranına git
+  goToLogin: () => void;        // Login ekranına git
 };
 
 // Context'i oluştur (başlangıç değerleriyle)
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   showSignup: false,
+  currentUser: null,
   login: () => {},
   logout: () => {},
   goToSignup: () => {},
@@ -49,18 +59,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   
   // showSignup state'i: Signup ekranı gösterilsin mi? (Başlangıçta false - Login göster)
   const [showSignup, setShowSignup] = useState(false);
+  
+  // currentUser state'i: Şu anki kullanıcı bilgileri
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
-  // Login fonksiyonu: Kullanıcı giriş yapınca çağrılır
-  const login = () => {
-    console.log("Login - isLoggedIn: true");
-    setIsLoggedIn(true);  // State'i true yap → App.tsx otomatik Dashboard'a geçer
+  // Login fonksiyonu: Kullanıcı bilgileriyle giriş yapar
+  const login = (user: User) => {
+    console.log("Login - isLoggedIn: true, User:", user.email);
+    setCurrentUser(user);     // Kullanıcı bilgilerini kaydet
+    setIsLoggedIn(true);      // State'i true yap → App.tsx otomatik Dashboard'a geçer
   };
 
   // Logout fonksiyonu: Kullanıcı çıkış yapınca çağrılır
   const logout = () => {
     console.log("Logout - isLoggedIn: false");
-    setIsLoggedIn(false);  // State'i false yap → App.tsx otomatik Login'e döner
-    setShowSignup(false);  // Login ekranına dön
+    setCurrentUser(null);     // Kullanıcı bilgilerini temizle
+    setIsLoggedIn(false);     // State'i false yap → App.tsx otomatik Login'e döner
+    setShowSignup(false);     // Login ekranına dön
   };
   
   // Signup ekranına git
@@ -77,7 +92,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Provider ile tüm child component'lere değerleri sun
   return (
-    <AuthContext.Provider value={{ isLoggedIn, showSignup, login, logout, goToSignup, goToLogin }}>
+    <AuthContext.Provider value={{ 
+      isLoggedIn, 
+      showSignup, 
+      currentUser, 
+      login, 
+      logout, 
+      goToSignup, 
+      goToLogin 
+    }}>
       {children}
     </AuthContext.Provider>
   );

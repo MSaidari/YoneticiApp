@@ -7,7 +7,7 @@ import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 
 export const Dashboard = () => {
-  const { logout } = useAuth();
+  const { logout, currentUser } = useAuth();
   const navigation = useNavigation();
   const [taskCount, setTaskCount] = useState(0);
   const [domainCount, setDomainCount] = useState(0);
@@ -19,8 +19,11 @@ export const Dashboard = () => {
     try {
       setLoading(true);
       
+      // Kullanıcı tabanlı veya hızlı giriş için tüm verileri çek
+      const userId = currentUser?.id === 0 ? undefined : currentUser?.id;
+      
       // Görevleri çek
-      const tasksResponse = await fetchtasks();
+      const tasksResponse = await fetchtasks(userId);
       if (tasksResponse.ok) {
         const tasks = await tasksResponse.json();
         setTaskCount(tasks.filter((t: any) => t.status !== 'done').length);
@@ -28,24 +31,24 @@ export const Dashboard = () => {
       }
       
       // Domainleri çek
-      const domainsResponse = await fetchdomanins();
+      const domainsResponse = await fetchdomanins(userId);
       if (domainsResponse.ok) {
         const domains = await domainsResponse.json();
         setDomainCount(domains.length);
       }
       
       // Şifreleri çek
-      const passwordsResponse = await fetchPasswords();
+      const passwordsResponse = await fetchPasswords(userId);
       if (passwordsResponse.ok) {
-        const passwords = await passwordsResponse.json();
-        setPasswordCount(passwords.length);
+        const passwordsData = await passwordsResponse.json();
+        setPasswordCount(passwordsData.length);
       }
     } catch (error) {
       console.error("Dashboard veri çekme hatası:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUser]);
 
   // Ekran her açıldığında verileri yenile
   useFocusEffect(

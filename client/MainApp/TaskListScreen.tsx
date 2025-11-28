@@ -15,8 +15,12 @@ import edittask  from "../Components/Api";
 import { TaskCard } from "../Components/TaskCard";
 import { TaskAddModal } from "./TaskAddModal";
 import { AddButton } from "../Components/addmodal";
+import { useAuth } from "../context/AuthContext";
 
 export const TaskListScreen = () => {
+  // Auth Context'ten kullanıcı bilgilerini al
+  const { currentUser } = useAuth();
+  
   // State'ler:
   // tasks: API'den çekilen görevlerin listesi
   const [tasks, setTasks] = useState([]);
@@ -45,8 +49,9 @@ export const TaskListScreen = () => {
       setLoading(true); // Yükleme başladı
       setError(""); // Önceki hataları temizle
 
-      // API'den görevleri çek
-      const response = await fetchtasks();
+      // API'den görevleri çek (kullanıcı tabanlı veya hızlı giriş için tümü)
+      const userId = currentUser?.id === 0 ? undefined : currentUser?.id;
+      const response = await fetchtasks(userId);
 
       // JSON'a parse et
       const tasksData = await response.json();
@@ -89,8 +94,9 @@ export const TaskListScreen = () => {
         response = await edittask(taskData.id, taskData);
         console.log("Görev başarıyla güncellendi");
       } else {
-        // Add modu: Yeni görev ekle
-        response = await addTask(taskData);
+        // Add modu: Yeni görev ekle (userId ile)
+        const userId = currentUser?.id === 0 ? undefined : currentUser?.id;
+        response = await addTask(taskData, userId);
         console.log("Görev başarıyla eklendi");
       }
 

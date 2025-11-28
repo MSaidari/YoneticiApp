@@ -17,7 +17,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { fetchUsers, createUser } from "../Components/Api";
+import { loginUser, createUser, fetchUsers } from "../Components/Api";
 
 export const AuthScreen = () => {
   const { login } = useAuth();
@@ -41,24 +41,17 @@ export const AuthScreen = () => {
 
   /**
    * handleLogin: Kullanıcı girişi yapan fonksiyon
-   * Api.tsx'teki fetchUsers fonksiyonunu kullanır
+   * Api.tsx'teki loginUser fonksiyonunu kullanır
    */
   const handleLogin = async () => {
     try {
-      // Api.tsx'ten fetchUsers ile tüm kullanıcıları al
-      const response = await fetchUsers();
-      const users = await response.json();
-      console.log("Kullanıcılar alındı:", users.length, "kullanıcı");
-
-      // Email ve password kontrolü
-      const user = users.find(
-        (u: any) => u.email === email && u.password === password
-      );
+      // Api.tsx'ten loginUser ile giriş kontrolü yap
+      const user = await loginUser(email, password);
 
       if (user) {
         console.log("Login başarılı!", user);
         setError("");
-        login();
+        login(user); // Kullanıcı bilgilerini AuthContext'e aktar
       } else {
         setError("Email veya şifre hatalı!");
         console.log("Login başarısız - Kullanıcı bulunamadı");
@@ -75,7 +68,14 @@ export const AuthScreen = () => {
   const handleQuickLogin = () => {
     console.log("Hızlı giriş - Doğrudan giriş yapılıyor");
     setError("");
-    login();
+    // Hızlı giriş için dummy user (tüm verilere erişim)
+    const quickUser = {
+      id: 0,
+      email: "quick@login.com",
+      name: "Hızlı Giriş",
+      password: ""
+    };
+    login(quickUser);
   };
 
   /**
@@ -100,11 +100,29 @@ export const AuthScreen = () => {
     }
 
     try {
+      // Önce aynı email ile kayıtlı kullanıcı var mı kontrol et
+      const usersResponse = await fetchUsers();
+      const users = await usersResponse.json();
+      const existingUser = users.find((u: any) => u.email === email);
+
+      if (existingUser) {
+        setError("Bu email adresi zaten kayıtlı!");
+        return;
+      }
+
       // Api.tsx'ten createUser ile yeni kullanıcı ekle
-      await createUser({ email, password });
+      const response = await createUser({ email, password, name: email.split('@')[0] });
+      const userData = await response.json();
       console.log("Kayıt başarılı!");
       setError("");
-      login(); // Otomatik giriş yap
+      // Otomatik giriş yap - yeni kullanıcı bilgileriyle
+      const newUser = {
+        id: userData.id,
+        email: email,
+        name: email.split('@')[0],
+        password: password
+      };
+      login(newUser);
     } catch (err) {
       setError("Kayıt başarısız!");
       console.error("API Hatası:", err);

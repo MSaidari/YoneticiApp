@@ -7,8 +7,12 @@ import { AddButton } from "../Components/addmodal";
 import { DomainAddModal } from "./DomainAddModal";
 import { fetchdomanins,deletedomain } from "../Components/Api";
 import { DomainCard } from "../Components/DomainCard";
+import { useAuth } from "../context/AuthContext";
 
 export const DomainListScreen = () => {
+  // Auth Context'ten kullanıcı bilgilerini al
+  const { currentUser } = useAuth();
+  
   const [modalVisible, setModalVisible] = useState(false);
   const [domains, setDomains] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,7 +33,9 @@ export const DomainListScreen = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await fetchdomanins();
+      // Kullanıcı tabanlı veya hızlı giriş için tüm domainleri çek
+      const userId = currentUser?.id === 0 ? undefined : currentUser?.id;
+      const response = await fetchdomanins(userId);
       const data = await response.json();
       setDomains(data);
       setLoading(false);

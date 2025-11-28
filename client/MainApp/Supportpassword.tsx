@@ -12,10 +12,14 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 import { fetchtasks, addTask,fetchPasswords, deletePassword } from "../Components/Api";
 import { PasswordCard } from "../Components/passwordcard";
+import { useAuth } from "../context/AuthContext";
 
 export const SupportPassword = () => {
+  // Auth Context'ten kullanıcı bilgilerini al
+  const { currentUser } = useAuth();
+  
   // State'ler:
-  // tasks: API'den çekilen görevlerin listesi
+  // passwords: API'den çekilen şifrelerin listesi
   const [passwords, setPasswords] = useState([]);
   
   // loading: Veriler yüklenirken gösterilecek
@@ -37,8 +41,9 @@ export const SupportPassword = () => {
       setLoading(true); // Yükleme başladı
       setError(""); // Önceki hataları temizle
       
-      // API'den şifreleri çek
-      const response = await fetchPasswords();
+      // API'den şifreleri çek (kullanıcı tabanlı veya hızlı giriş için tümü)
+      const userId = currentUser?.id === 0 ? undefined : currentUser?.id;
+      const response = await fetchPasswords(userId);
       
       // Response kontrolü
       if (!response.ok) {
