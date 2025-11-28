@@ -1,6 +1,8 @@
 import React, { use, useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 import { AddButton } from "../Components/addmodal";
 import { DomainAddModal } from "./DomainAddModal";
 import { fetchdomanins,deletedomain } from "../Components/Api";
@@ -12,9 +14,16 @@ export const DomainListScreen = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    handlefetchDomains();
-  }, []);
+  /**
+   * useFocusEffect: Ekran her açıldığında çalışır
+   * - handlefetchDomains() fonksiyonunu çağırır
+   * - Dashboard'dan dönüldüğünde veya ilk açılışta veri yeniler
+   */
+  useFocusEffect(
+    useCallback(() => {
+      handlefetchDomains();
+    }, [])
+  );
 
   const handlefetchDomains = async () => {
     setLoading(true);

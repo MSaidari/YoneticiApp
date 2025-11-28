@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { fetchtasks, addTask,fetchPasswords, deletePwassword } from "../Components/Api";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
+import { fetchtasks, addTask,fetchPasswords, deletePassword } from "../Components/Api";
 import { PasswordCard } from "../Components/passwordcard";
 
 export const SupportPassword = () => {
@@ -60,13 +62,15 @@ export const SupportPassword = () => {
   };
 
   /**
-   * useEffect: Component ilk yüklendiğinde çalışır
-   * - handleFetchTasks() fonksiyonunu çağırır
-   * - [] dependency array → Sadece ilk render'da çalışır
+   * useFocusEffect: Ekran her açıldığında çalışır
+   * - handleFetchpassword() fonksiyonunu çağırır
+   * - Dashboard'dan dönüldüğünde veya ilk açılışta veri yeniler
    */
-  useEffect(() => {
-    handleFetchpassword();
-  }, []); // Boş array = sadece ilk yüklemede çalış
+  useFocusEffect(
+    useCallback(() => {
+      handleFetchpassword();
+    }, [])
+  );
 
   /**
    * useEffect: Süresi dolmuş şifreleri otomatik siler
@@ -87,7 +91,7 @@ export const SupportPassword = () => {
         
         for (const password of expiredPasswords) {
           try {
-            await deletePwassword((password as any).id);
+            await deletePassword((password as any).id);
             console.log(`Şifre DB'den silindi: ${(password as any).id}`);
           } catch (error) {
             console.error(`Şifre silme hatası (${(password as any).id}):`, error);

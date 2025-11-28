@@ -105,13 +105,11 @@ export const TaskCard: React.FC<TaskCardProps> = ({
    * Card Container: Eğer onPress prop'u varsa TouchableOpacity, yoksa View kullan
    * Bu sayede kart tıklanabilir veya tıklanamaz yapılabilir
    */
-  const CardContainer = onPress ? TouchableOpacity : View;
+  const CardContainer =  View;
 
   return (
     <CardContainer
       style={styles.taskCard}
-      onPress={onPress}
-      activeOpacity={onPress ? 0.7 : 1} // Tıklanabilirse opacity efekti ver
     >
       {/* Sol tarafta öncelik göstergesi (renkli çizgi) */}
       <View

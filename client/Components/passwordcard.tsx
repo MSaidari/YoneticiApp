@@ -108,7 +108,7 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
             style={styles.copyButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="copy-outline" size={14} color="#64748B" />
+            <Ionicons name="copy-outline" size={18} color="#64748B" />
           </TouchableOpacity>
         </View>
 
@@ -129,7 +129,7 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
           >
             <Ionicons
               name={isPasswordVisible ? "eye-off-outline" : "eye-outline"}
-              size={16}
+              size={20}
               color="#64748B"
             />
           </TouchableOpacity>
@@ -140,7 +140,7 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
             style={styles.copyButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="copy-outline" size={14} color="#64748B" />
+            <Ionicons name="copy-outline" size={18} color="#64748B" />
           </TouchableOpacity>
         </View>
 
@@ -231,10 +231,10 @@ const styles = StyleSheet.create({
   },
   // Buttons: Copy, Eye butonları
   copyButton: {
-    padding: 4,
+    padding: 8,
   },
   eyeButton: {
-    padding: 4,
+    padding: 8,
   },
   // Hour: Kalan saat container ve badge
   hourContainer: {

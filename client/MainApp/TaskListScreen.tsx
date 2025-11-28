@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 import { fetchtasks, addTask, deletetask } from "../Components/Api";
 import edittask  from "../Components/Api";
 import { TaskCard } from "../Components/TaskCard";
@@ -63,13 +65,15 @@ export const TaskListScreen = () => {
   };
 
   /**
-   * useEffect: Component ilk yüklendiğinde çalışır
+   * useFocusEffect: Ekran her açıldığında çalışır
    * - handleFetchTasks() fonksiyonunu çağırır
-   * - [] dependency array → Sadece ilk render'da çalışır
+   * - Dashboard'dan dönüldüğünde veya ilk açılışta veri yeniler
    */
-  useEffect(() => {
-    handleFetchTasks();
-  }, []); // Boş array = sadece ilk yüklemede çalış
+  useFocusEffect(
+    useCallback(() => {
+      handleFetchTasks();
+    }, [])
+  );
 
   /**
    * handleSaveTask: Görev ekler veya günceller

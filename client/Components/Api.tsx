@@ -207,7 +207,7 @@ export const deletedomain = async (id: number | string) => {
   }
 };
 
-export const deletePwassword = async (id: number | string) => {
+export const deletePassword = async (id: number | string) => {
   try {
     const response = await fetch(URL + `passwords/${id}`, {
       method: "DELETE",
@@ -221,3 +221,4 @@ export const deletePwassword = async (id: number | string) => {
     throw error;
   }
 }
+
