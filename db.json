@@ -63,24 +63,6 @@
       "name": "Üçüncü Kullanıcı"
     }
   ],
-  "categories": [
-    {
-      "id": "1",
-      "name": "Faturalar"
-    },
-    {
-      "id": "2",
-      "name": "Acil"
-    }
-  ],
-  "credentials": [
-    {
-      "id": "1",
-      "service_name": "google.com WP Admin",
-      "username": "admin",
-      "password": "123"
-    }
-  ],
   "passwords": [
     {
       "id": "1",
