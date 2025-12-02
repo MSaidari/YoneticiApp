@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,23 +11,41 @@ import {
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { addDomain } from "../Components/Api";
+import { addDomain, updateData } from "../Components/Api";
 
 interface DomainAddModalProps {
   visible: boolean;
   onClose: () => void;
   onSave: (domain: any) => void;
+  editingDomain?: {
+    id: number | string;
+    domain: string;
+    provider: string;
+    date?: string;
+  } | null;
 }
 
 export const DomainAddModal: React.FC<DomainAddModalProps> = ({
   visible,
   onClose,
   onSave,
+  editingDomain,
 }) => {
   const [domainName, setDomainName] = useState("");
   const [provider, setProvider] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Edit mode için verileri doldur
+  useEffect(() => {
+    if (editingDomain) {
+      setDomainName(editingDomain.domain);
+      setProvider(editingDomain.provider);
+      setExpiryDate(editingDomain.date || "");
+    } else {
+      handleClear();
+    }
+  }, [editingDomain, visible]);
 
   const handleSave = async () => {
     if (!domainName.trim()) {
@@ -42,12 +60,24 @@ export const DomainAddModal: React.FC<DomainAddModalProps> = ({
 
     setLoading(true);
     try {
-      await addDomain({
-        domain: domainName.trim().toLowerCase(),
-        provider: provider.trim(),
-        date: expiryDate || new Date().toISOString(),
-        userId: 1,
-      });
+      if (editingDomain) {
+        // Edit mode - güncelle
+        await updateData("domains", editingDomain.id, {
+          domain: domainName.trim().toLowerCase(),
+          provider: provider.trim(),
+          date: expiryDate || new Date().toISOString(),
+        });
+      } else {
+        // Add mode - yeni ekle
+        await addDomain(
+          {
+            domain: domainName.trim().toLowerCase(),
+            provider: provider.trim(),
+            date: expiryDate || new Date().toISOString(),
+          },
+          1 // userId
+        );
+      }
       
       // Parent component'e bildir
       onSave({
@@ -59,8 +89,8 @@ export const DomainAddModal: React.FC<DomainAddModalProps> = ({
       // Formu temizle
       handleClear();
     } catch (error) {
-      Alert.alert("Hata", "Domain eklenirken bir hata oluştu!");
-      console.error("Domain ekleme hatası:", error);
+      Alert.alert("Hata", editingDomain ? "Domain güncellenirken bir hata oluştu!" : "Domain eklenirken bir hata oluştu!");
+      console.error("Domain işlem hatası:", error);
     } finally {
       setLoading(false);
     }
@@ -90,7 +120,9 @@ export const DomainAddModal: React.FC<DomainAddModalProps> = ({
             <View style={styles.modalContent}>
               {/* Modal Header */}
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Yeni Domain Ekle</Text>
+                <Text style={styles.modalTitle}>
+                  {editingDomain ? "Domain Düzenle" : "Yeni Domain Ekle"}
+                </Text>
                 <TouchableOpacity onPress={handleClose}>
                   <Ionicons name="close" size={24} color="#64748B" />
                 </TouchableOpacity>

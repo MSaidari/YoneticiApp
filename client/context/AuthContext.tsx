@@ -15,6 +15,12 @@ type User = {
   email: string;
   name: string;
   password: string;
+  role: "admin" | "user";
+  permissions?: {
+    domains: boolean;
+    tasks: boolean;
+    passwords: boolean;
+  };
 };
 
 // AuthContext'in sağlayacağı değerlerin tipi
@@ -22,6 +28,7 @@ type AuthContextType = {
   isLoggedIn: boolean;          // Kullanıcı giriş yaptı mı? (true/false)
   showSignup: boolean;          // Signup ekranı gösterilsin mi?
   currentUser: User | null;     // Şu anki kullanıcı bilgileri
+  isAdmin: boolean;             // Kullanıcı admin mi?
   login: (user: User) => void;  // Giriş yapma fonksiyonu (kullanıcı bilgisiyle)
   logout: () => void;           // Çıkış yapma fonksiyonu
   goToSignup: () => void;       // Signup ekranına git
@@ -33,6 +40,7 @@ const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   showSignup: false,
   currentUser: null,
+  isAdmin: false,
   login: () => {},
   logout: () => {},
   goToSignup: () => {},
@@ -65,10 +73,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Login fonksiyonu: Kullanıcı bilgileriyle giriş yapar
   const login = (user: User) => {
-    console.log("Login - isLoggedIn: true, User:", user.email);
+    console.log("Login - isLoggedIn: true, User:", user.email, "Role:", user.role);
     setCurrentUser(user);     // Kullanıcı bilgilerini kaydet
     setIsLoggedIn(true);      // State'i true yap → App.tsx otomatik Dashboard'a geçer
   };
+
+  // Admin kontrolü: currentUser'dan hesaplanır
+  const isAdmin = currentUser?.role === "admin";
 
   // Logout fonksiyonu: Kullanıcı çıkış yapınca çağrılır
   const logout = () => {
@@ -95,7 +106,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     <AuthContext.Provider value={{ 
       isLoggedIn, 
       showSignup, 
-      currentUser, 
+      currentUser,
+      isAdmin,
       login, 
       logout, 
       goToSignup, 

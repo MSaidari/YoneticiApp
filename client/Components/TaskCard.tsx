@@ -1,6 +1,7 @@
-import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 /**
  * TaskCard: Tekrar kullanılabilir görev kartı component'i
@@ -19,9 +20,12 @@ interface TaskCardProps {
 
   // Opsiyonel props (optional) - ? işareti ile tanımlanır
   createdAt?: string; // Oluşturma tarihi (olmayabilir)
+  dueDate?: string; // Bitiş tarihi (olmayabilir)
+  userName?: string; // Kullanıcı adı (admin görünümü için)
   onEdit?: () => void; // Edit butonuna basıldığında çalışacak fonksiyon (olmayabilir)
   onDelete?: () => void; // Delete butonuna basıldığında çalışacak fonksiyon (olmayabilir)
   onPress?: () => void; // Kart tıklandığında çalışacak fonksiyon (olmayabilir)
+  onDateChange?: (date: Date) => void; // Tarih değiştiğinde çalışacak fonksiyon (olmayabilir)
 }
 
 /**
@@ -45,10 +49,28 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   status,
   priority,
   createdAt,
+  dueDate,
+  userName,
   onEdit,
   onDelete,
   onPress,
+  onDateChange,
 }) => {
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(dueDate ? new Date(dueDate) : new Date());
+
+  /**
+   * isOverdue: Görevin süresi dolmuş mu kontrol eder
+   * - Eğer status "done" değilse ve dueDate geçmişse true döner
+   */
+  const isOverdue = () => {
+    if (status === "done" || !dueDate) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
+    return due < today;
+  };
   /**
    * getStatusInfo: Duruma göre badge bilgilerini döndürür
    * Switch-case ile status'a göre renk ve label belirler
@@ -108,9 +130,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const CardContainer =  View;
 
   return (
-    <CardContainer
-      style={styles.taskCard}
-    >
+    <>
+      <CardContainer
+        style={styles.taskCard}
+      >
       {/* Sol tarafta öncelik göstergesi (renkli çizgi) */}
       <View
         style={[styles.priorityIndicator, { backgroundColor: priorityColor }]}
@@ -136,14 +159,24 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </View>
         </View>
 
-        {/* Alt kısım: Tarih + Edit/Delete iconları */}
+        {/* Alt kısım: Tarih + Action butonları */}
         <View style={styles.cardFooter}>
-          {/* Tarih (varsa göster) */}
-          {createdAt ? (
+          {/* Tarih (sadece dueDate varsa göster) */}
+          {dueDate ? (
             <View style={styles.dateContainer}>
-              <Ionicons name="calendar-outline" size={14} color="#94A3B8" />
-              <Text style={styles.dateText}>
-                {new Date(createdAt).toLocaleDateString("tr-TR")}
+              <Ionicons 
+                name="calendar-outline" 
+                size={14} 
+                color={isOverdue() ? "#EF4444" : "#94A3B8"} 
+              />
+              <Text style={[
+                styles.dateText,
+                isOverdue() && styles.overdueText
+              ]}>
+                {isOverdue() 
+                  ? "Süresi Doldu" 
+                  : new Date(dueDate).toLocaleDateString("tr-TR")
+                }
               </Text>
             </View>
           ) : (
@@ -151,8 +184,18 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           )}
 
           {/* Action butonları (onEdit veya onDelete prop'u varsa göster) */}
-          {(onEdit || onDelete) && (
+          {(onEdit || onDelete || onDateChange) && (
             <View style={styles.actionButtons}>
+              {/* Due Date butonu (onDateChange prop'u varsa göster) */}
+              {onDateChange && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => setShowDatePicker(true)}
+                  activeOpacity={0.6}
+                >
+                  <Ionicons name="calendar" size={18} color="#6366F1" />
+                </TouchableOpacity>
+              )}
               {/* Edit butonu (onEdit prop'u varsa göster) */}
               {onEdit && (
                 <TouchableOpacity
@@ -176,8 +219,41 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             </View>
           )}
         </View>
+
+        {/* Date Picker Modal */}
+        {showDatePicker && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            display={Platform.OS === "ios" ? "spinner" : "default"}
+            onChange={(event, date) => {
+              // Android'de picker otomatik kapanır, iOS'ta manuel kapatmak gerekir
+              if (Platform.OS === "android") {
+                setShowDatePicker(false);
+              }
+              if (date && onDateChange && event.type === "set") {
+                setSelectedDate(date);
+                onDateChange(date);
+                if (Platform.OS === "ios") {
+                  setShowDatePicker(false);
+                }
+              } else if (event.type === "dismissed") {
+                setShowDatePicker(false);
+              }
+            }}
+          />
+        )}
+
+        {/* User Attribution: Sadece admin görür */}
+        {userName && (
+          <View style={styles.userInfoBottom}>
+            <Ionicons name="person-outline" size={12} color="#94A3B8" />
+            <Text style={styles.userTextBottom}>{userName}</Text>
+          </View>
+        )}
       </View>
     </CardContainer>
+    </>
   );
 };
 
@@ -186,6 +262,7 @@ const styles = StyleSheet.create({
   // Task Card: Ana kart container'ı
   taskCard: {
     flexDirection: "row", // Sol çizgi + içerik yan yana
+    flexWrap: "wrap",
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     marginBottom: 12,
@@ -251,6 +328,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#94A3B8",
   },
+  overdueText: {
+    color: "#EF4444",
+    fontWeight: "600",
+  },
+  // User Info: Kullanıcı bilgisi (admin görünümü)
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginLeft: 12,
+  },
+  userText: {
+    fontSize: 11,
+    color: "#64748B",
+    fontStyle: "italic",
+  },
   // Action Buttons: Edit/Delete butonları
   actionButtons: {
     flexDirection: "row",
@@ -263,6 +356,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
     alignItems: "center",
     justifyContent: "center",
+  },
+  // User Info Bottom: Kullanıcı bilgisi (kartın alt kısmında)
+  userInfoBottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#F1F5F9",
+  },
+  userTextBottom: {
+    fontSize: 11,
+    color: "#94A3B8",
+    fontStyle: "italic",
   },
 });
         

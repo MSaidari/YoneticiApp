@@ -10,7 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
-import { fetchtasks, addTask, deletetask } from "../Components/Api";
+import { fetchtasks, addTask, deletetask, fetchDataWithUserInfo } from "../Components/Api";
 import edittask  from "../Components/Api";
 import { TaskCard } from "../Components/TaskCard";
 import { TaskAddModal } from "./TaskAddModal";
@@ -19,11 +19,11 @@ import { useAuth } from "../context/AuthContext";
 
 export const TaskListScreen = () => {
   // Auth Context'ten kullanıcı bilgilerini al
-  const { currentUser } = useAuth();
+  const { currentUser, isAdmin } = useAuth();
   
   // State'ler:
   // tasks: API'den çekilen görevlerin listesi
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState<any[]>([]);
 
   // loading: Veriler yüklenirken gösterilecek
   const [loading, setLoading] = useState(true);
@@ -49,12 +49,10 @@ export const TaskListScreen = () => {
       setLoading(true); // Yükleme başladı
       setError(""); // Önceki hataları temizle
 
-      // API'den görevleri çek (kullanıcı tabanlı veya hızlı giriş için tümü)
-      const userId = currentUser?.id === 0 ? undefined : currentUser?.id;
-      const response = await fetchtasks(userId);
-
-      // JSON'a parse et
-      const tasksData = await response.json();
+      // API'den görevleri çek (admin ise veya yetki varsa tüm görevler + kullanıcı bilgisi)
+      const userId = currentUser && currentUser.id !== 0 ? currentUser.id : undefined;
+      const hasPermission = currentUser?.permissions?.tasks || false;
+      const tasksData = await fetchDataWithUserInfo("tasks", userId, isAdmin, hasPermission);
 
       // State'e kaydet
       setTasks(tasksData);
@@ -95,7 +93,7 @@ export const TaskListScreen = () => {
         console.log("Görev başarıyla güncellendi");
       } else {
         // Add modu: Yeni görev ekle (userId ile)
-        const userId = currentUser?.id === 0 ? undefined : currentUser?.id;
+        const userId = currentUser && currentUser.id !== 0 ? currentUser.id : undefined;
         response = await addTask(taskData, userId);
         console.log("Görev başarıyla eklendi");
       }
@@ -120,15 +118,17 @@ export const TaskListScreen = () => {
    * renderTaskItem: FlatList için her görev kartını render eder
    * - item: Görev objesi
    * - TaskCard component'ine props olarak gönderir
-   * - due_date veya createdAt varsa göster (hangisi varsa)
+   * - due_date varsa göster
    */
-  const renderTaskItem = ({ item }: any) => (
+  const renderTaskItem = ({ item }: any) => {
+    return (
     <TaskCard
       id={item.id}
       title={item.title}
       status={item.status}
       priority={item.priority}
-      createdAt={item.due_date || item.createdAt}
+      dueDate={item.due_date}
+      userName={isAdmin ? item.userName : undefined}
       onEdit={() => {
         // Edit modunu aktif et ve modalı aç
         setEditingTask(item);
@@ -138,9 +138,39 @@ export const TaskListScreen = () => {
         deletetask(item.id);
         handleFetchTasks();
       }}
+      onDateChange={async (date: Date) => {
+        // Tarih değiştiğinde görevi güncelle
+        try {
+          // Önce local state'i güncelle (optimistic update)
+          setTasks((prevTasks: any[]) =>
+            prevTasks.map((task: any) =>
+              task.id === item.id
+                ? { ...task, due_date: date.toISOString() }
+                : task
+            )
+          );
+
+          // Sonra API'ye kaydet
+          const response = await edittask(item.id, {
+            due_date: date.toISOString(),
+          });
+          
+          if (!response.ok) {
+            // Eğer API başarısız olursa geri al
+            console.error("Görev tarihi güncellenemedi");
+            await handleFetchTasks(); // API'den tekrar çek
+          } else {
+            console.log("Görev tarihi güncellendi");
+          }
+        } catch (error) {
+          console.error("Tarih güncelleme hatası:", error);
+          await handleFetchTasks(); // Hata durumunda tekrar çek
+        }
+      }}
       onPress={() => console.log("Görev detayı:", item.id)}
     />
   );
+  };
 
   /**
    * Loading State: Veriler yüklenirken gösterilir

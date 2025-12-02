@@ -1,8 +1,8 @@
 {
   "name": "mock_api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Mock API with Gmail SMTP",
+  "main": "server.js",
   "scripts": {
     "start": "json-server --watch db.json --port 3001"
   },
@@ -10,6 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "json-server": "^1.0.0-beta.3"
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "json-server": "^1.0.0-beta.3",
+    "nodemailer": "^6.10.1"
   }
 }

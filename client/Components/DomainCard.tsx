@@ -20,6 +20,8 @@ interface DomainCardProps {
   domain: string;
   provider: string;
   expiryDate?: string;
+  userName?: string;
+  onEdit?: () => void;
   onDelete?: () => void;
 }
 
@@ -28,7 +30,8 @@ export const DomainCard: React.FC<DomainCardProps> = ({
   domain,
   provider,
   expiryDate,
-  
+  userName,
+  onEdit,
   onDelete,
 }) => {
   /**
@@ -74,13 +77,14 @@ export const DomainCard: React.FC<DomainCardProps> = ({
   const CardContainer = View;
 
   return (
-    <CardContainer
-      style={styles.card}
-    >
-      {/* Sol tarafta domain icon */}
-      <View style={styles.iconContainer}>
-        <Ionicons name="globe" size={24} color="#6366F1" />
-      </View>
+    <>
+      <CardContainer
+        style={styles.card}
+      >
+        {/* Sol tarafta domain icon */}
+        <View style={styles.iconContainer}>
+          <Ionicons name="globe" size={24} color="#6366F1" />
+        </View>
 
       {/* Orta kısım: Domain adı, provider, tarih */}
       <View style={styles.content}>
@@ -117,21 +121,43 @@ export const DomainCard: React.FC<DomainCardProps> = ({
             </View>
           </View>
         )}
-      </View>
 
-      {/* Sağ tarafta action butonları */}
-      {onDelete && (
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={onDelete}
-            activeOpacity={0.6}
-          >
-            <Ionicons name="trash-outline" size={18} color="#EF4444" />
-          </TouchableOpacity>
+        {/* User Attribution: Sadece admin görür */}
+      {userName && (
+        <View style={styles.userInfoBottom}>
+          <Ionicons name="person-outline" size={12} color="#94A3B8" />
+          <Text style={styles.userTextBottom}>{userName}</Text>
         </View>
       )}
+      </View>
+      {/* Sağ tarafta action butonları */}
+      {(onEdit || onDelete) && (
+        <View style={styles.actionButtons}>
+          {onEdit && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={onEdit}
+              activeOpacity={0.6}
+            >
+              <Ionicons name="create-outline" size={20} color="#64748B" />
+            </TouchableOpacity>
+          )}
+          {onDelete && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={onDelete}
+              activeOpacity={0.6}
+            >
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+
+      
     </CardContainer>
+    </>
   );
 };
 
@@ -139,6 +165,7 @@ const styles = StyleSheet.create({
   // Card: Ana kart container
   card: {
     flexDirection: "row",
+    flexWrap: "wrap",
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
@@ -199,6 +226,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
   },
+  // User Info: Kullanıcı bilgisi (admin görünümü)
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+  },
+  userText: {
+    fontSize: 11,
+    color: "#64748B",
+    fontStyle: "italic",
+  },
   // Action Buttons: Edit/Delete butonları
   actionButtons: {
     flexDirection: "column",
@@ -206,11 +245,27 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   actionButton: {
-    width: 32,
-    height: 32,
+    width: 37,
+    height: 37,
     borderRadius: 8,
     backgroundColor: "#F1F5F9",
     alignItems: "center",
     justifyContent: "center",
+  },
+  // User Info Bottom: Kullanıcı bilgisi (kartın alt kısmında)
+  userInfoBottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#F1F5F9",
+    alignSelf: "stretch",
+  },
+  userTextBottom: {
+    fontSize: 11,
+    color: "#94A3B8",
+    fontStyle: "italic",
   },
 });

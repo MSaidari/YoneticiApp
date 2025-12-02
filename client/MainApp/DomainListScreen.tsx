@@ -5,18 +5,19 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 import { AddButton } from "../Components/addmodal";
 import { DomainAddModal } from "./DomainAddModal";
-import { fetchdomanins,deletedomain } from "../Components/Api";
+import { fetchdomanins,deletedomain, fetchDataWithUserInfo } from "../Components/Api";
 import { DomainCard } from "../Components/DomainCard";
 import { useAuth } from "../context/AuthContext";
 
 export const DomainListScreen = () => {
   // Auth Context'ten kullanıcı bilgilerini al
-  const { currentUser } = useAuth();
+  const { currentUser, isAdmin } = useAuth();
   
   const [modalVisible, setModalVisible] = useState(false);
   const [domains, setDomains] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [editingDomain, setEditingDomain] = useState<any>(null);
 
   /**
    * useFocusEffect: Ekran her açıldığında çalışır
@@ -33,10 +34,10 @@ export const DomainListScreen = () => {
     setLoading(true);
     setError("");
     try {
-      // Kullanıcı tabanlı veya hızlı giriş için tüm domainleri çek
+      // Admin ise veya yetki varsa tüm domainleri + kullanıcı bilgisi getir
       const userId = currentUser?.id === 0 ? undefined : currentUser?.id;
-      const response = await fetchdomanins(userId);
-      const data = await response.json();
+      const hasPermission = currentUser?.permissions?.domains || false;
+      const data = await fetchDataWithUserInfo("domains", userId, isAdmin, hasPermission);
       setDomains(data);
       setLoading(false);
       console.log("Domainler yüklendi:", data);
@@ -49,16 +50,22 @@ export const DomainListScreen = () => {
   /**
    * renderDomainItem: FlatList için her domain kartını render eder
    */
-  const renderDomainItem = ({ item }: any) => (
+  const renderDomainItem = ({ item }: any) => {
+    return (
     <DomainCard
       id={item.id}
       domain={item.domain}
       provider={item.provider}
       expiryDate={item.date}
+      userName={isAdmin ? item.userName : undefined}
+      onEdit={() => {
+        setEditingDomain(item);
+        setModalVisible(true);
+      }}
       onDelete={() => deletedomain(item.id).then(() => handlefetchDomains()).catch((err) => console.error(err))}
-
     />
   );
+  };
 
   return (
     <View style={styles.container}>
@@ -112,6 +119,29 @@ export const DomainListScreen = () => {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {/* Add Button */}
+      <AddButton
+        onPress={() => {
+          setEditingDomain(null);
+          setModalVisible(true);
+        }}
+      />
+
+      {/* Add/Edit Modal */}
+      <DomainAddModal
+        visible={modalVisible}
+        onClose={() => {
+          setModalVisible(false);
+          setEditingDomain(null);
+        }}
+        onSave={() => {
+          setModalVisible(false);
+          setEditingDomain(null);
+          handlefetchDomains();
+        }}
+        editingDomain={editingDomain}
+      />
     </View>
   );
 };

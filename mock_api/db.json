@@ -1,0 +1,163 @@
+{
+  "domains": [
+    {
+      "id": "4fa9",
+      "domain": "ornekdomain",
+      "provider": "GoDadd",
+      "date": "2026-02-13",
+      "userId": 2
+    }
+  ],
+  "tasks": [
+    {
+      "id": "1764674153172",
+      "title": "Gfhhfg",
+      "description": "Dfghd",
+      "status": "done",
+      "priority": "medium",
+      "due_date": "2025-12-01T11:15:00.000Z",
+      "userId": "2"
+    },
+    {
+      "id": "1764678301860",
+      "title": "Dddddd",
+      "description": "Ggggg",
+      "status": "done",
+      "priority": "medium",
+      "due_date": "2025-12-02T12:25:01.860Z",
+      "userId": "3"
+    },
+    {
+      "id": "1764685043631",
+      "title": "Aaaa",
+      "description": "Dddd",
+      "status": "progress",
+      "priority": "medium",
+      "due_date": "2025-12-01T14:17:00.000Z",
+      "userId": "2"
+    }
+  ],
+  "users": [
+    {
+      "id": "1",
+      "email": "admin@test.com",
+      "password": "admin123",
+      "name": "Admin Kullanıcısı",
+      "role": "admin",
+      "permissions": {
+        "domains": true,
+        "tasks": true,
+        "passwords": true
+      }
+    },
+    {
+      "id": "2",
+      "email": "test@test.com",
+      "password": "123",
+      "name": "Test Kullanıcısı",
+      "role": "user",
+      "permissions": {
+        "domains": false,
+        "tasks": true,
+        "passwords": true
+      }
+    },
+    {
+      "id": "3",
+      "email": "selam@gmail.com",
+      "password": "123",
+      "name": "İkinci Kullanıcı",
+      "role": "user",
+      "permissions": {
+        "domains": false,
+        "tasks": false,
+        "passwords": false
+      }
+    },
+    {
+      "id": "4",
+      "email": "deneme2@gmail.com",
+      "password": "1111",
+      "name": "Üçüncü Kullanıcı",
+      "role": "user",
+      "permissions": {
+        "domains": false,
+        "tasks": false,
+        "passwords": false
+      }
+    },
+    {
+      "id": "4fc1",
+      "email": "sait125152@gmail.com",
+      "password": "12345",
+      "name": "sait1223ari",
+      "role": "user",
+      "permissions": {
+        "domains": false,
+        "tasks": false,
+        "passwords": false
+      }
+    },
+    {
+      "id": "6431",
+      "email": "test2@test.com",
+      "password": "111",
+      "name": "Ali",
+      "role": "user",
+      "permissions": {
+        "domains": false,
+        "tasks": false,
+        "passwords": false
+      }
+    }
+  ],
+  "passwords": [
+    {
+      "id": "1",
+      "sunucu": "diademo",
+      "user_code": "demo",
+      "password": "dem",
+      "createdAt": "2025-12-02T10:30:00.000Z",
+      "userId": 1
+    },
+    {
+      "id": "2",
+      "sunucu": "diademo2",
+      "user_code": "admin",
+      "password": "secret12443",
+      "createdAt": "2025-12-02T10:30:00.000Z",
+      "userId": 1
+    },
+    {
+      "id": "3",
+      "sunucu": "başka sunucu",
+      "user_code": "user2uu",
+      "password": "pass456yy",
+      "createdAt": "2025-12-02T10:30:00.000Z",
+      "userId": 2
+    }
+  ],
+  "notes": [
+    {
+      "id": "17da",
+      "title": "Dgghgg",
+      "content": "Gfgfhhhh",
+      "createdAt": "2025-12-02T11:27:21.806Z",
+      "userId": "2"
+    },
+    {
+      "id": "fbc3",
+      "title": "Dee",
+      "content": "Neee",
+      "createdAt": "2025-12-02T11:27:50.105Z",
+      "userId": "2"
+    },
+    {
+      "id": "786f",
+      "title": "Deredeed",
+      "content": "Frfdgffff",
+      "createdAt": "2025-12-02T14:06:43.399Z",
+      "userId": "1"
+    }
+  ]
+}

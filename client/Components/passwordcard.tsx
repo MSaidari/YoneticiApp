@@ -15,14 +15,14 @@ import * as Clipboard from 'expo-clipboard';
  * Özellikler:
  * - Şifre görünürlük toggle'ı (göz ikonu ile)
  * - Sunucu, user_code ve şifre için kopyalama butonu
- * - Kalan saat bilgisi gösterimi (renkli badge ile)
+ * - Oluşturulma tarihi gösterimi
  * 
  * Props:
  * - id: Şifre ID'si
  * - server: Sunucu/Servis adı (örn: "google.com Admin Panel")
  * - user_code: Kullanıcı kodu
  * - password: Şifre
- * - hour: Kalan saat sayısı
+ * - createdAt: Oluşturulma tarihi
  * - onEdit: Düzenleme butonu fonksiyonu (opsiyonel)
  * - onDelete: Silme butonu fonksiyonu (opsiyonel)
  * - onPress: Kart tıklama fonksiyonu (opsiyonel)
@@ -33,7 +33,7 @@ interface PasswordCardProps {
   server: string;
   user_code: string;
   password: string;
-  hour: number;
+  userName?: string;
   onEdit?: () => void;
   onDelete?: () => void;
   onPress?: () => void;
@@ -44,7 +44,7 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
   server,
   user_code,
   password,
-  hour,
+  userName,
   onEdit,
   onDelete,
   onPress,
@@ -65,31 +65,18 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
     }
   };
 
-  /**
-   * getHourStyle: Kalan saate göre renk döndürür
-   * 24+ saat: Yeşil
-   * 12-24 saat: Sarı
-   * 0-12 saat: Kırmızı (kritik)
-   */
-  const getHourStyle = () => {
-    if (hour >= 24) {
-      return { color: "#10B981", backgroundColor: "#D1FAE5" }; // Yeşil
-    } else if (hour >= 12) {
-      return { color: "#F59E0B", backgroundColor: "#FEF3C7" }; // Sarı
-    } else {
-      return { color: "#EF4444", backgroundColor: "#FEE2E2" }; // Kırmızı
-    }
-  };
+
 
   // Card Container: Eğer onPress varsa TouchableOpacity, yoksa View
   const CardContainer = onPress ? TouchableOpacity : View;
 
   return (
-    <CardContainer
-      style={styles.card}
-      onPress={onPress}
-      activeOpacity={onPress ? 0.7 : 1}
-    >
+    <>
+      <CardContainer
+        style={styles.card}
+        onPress={onPress}
+        activeOpacity={onPress ? 0.7 : 1}
+      >
       {/* Sol tarafta servis icon'u */}
       <View style={styles.iconContainer}>
         <Ionicons name="key" size={24} color="#6366F1" />
@@ -144,15 +131,13 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Kalan Saat */}
-        <View style={styles.hourContainer}>
-          <Ionicons name="time-outline" size={14} color={getHourStyle().color} />
-          <View style={[styles.hourBadge, { backgroundColor: getHourStyle().backgroundColor }]}>
-            <Text style={[styles.hourText, { color: getHourStyle().color }]}>
-              {hour <= 0 ? "Süresi Doldu" : `${hour} saat kaldı`}
-            </Text>
-          </View>
+        {/* User Attribution: Sadece admin görür */}
+      {userName && (
+        <View style={styles.userInfoBottom}>
+          <Ionicons name="person-outline" size={12} color="#94A3B8" />
+          <Text style={styles.userTextBottom}>{userName}</Text>
         </View>
+      )}
       </View>
 
       {/* Sağ tarafta action butonları */}
@@ -178,7 +163,10 @@ export const PasswordCard: React.FC<PasswordCardProps> = ({
           )}
         </View>
       )}
+
+      
     </CardContainer>
+    </>
   );
 };
 
@@ -186,6 +174,7 @@ const styles = StyleSheet.create({
   // Card: Ana kart container
   card: {
     flexDirection: "row",
+    flexWrap: "wrap",
     backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
@@ -236,21 +225,17 @@ const styles = StyleSheet.create({
   eyeButton: {
     padding: 8,
   },
-  // Hour: Kalan saat container ve badge
-  hourContainer: {
+  // User Info: Kullanıcı bilgisi (admin görünümü)
+  userInfo: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 4,
+    gap: 4,
+    marginTop: 8,
   },
-  hourBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  hourText: {
-    fontSize: 12,
-    fontWeight: "600",
+  userText: {
+    fontSize: 11,
+    color: "#64748B",
+    fontStyle: "italic",
   },
   // Action Buttons: Edit/Delete butonları
   actionButtons: {
@@ -265,5 +250,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#F1F5F9",
     alignItems: "center",
     justifyContent: "center",
+  },
+  // User Info Bottom: Kullanıcı bilgisi (kartın alt kısmında)
+  userInfoBottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#F1F5F9",
+    alignSelf: "stretch",
+  },
+  userTextBottom: {
+    fontSize: 11,
+    color: "#94A3B8",
+    fontStyle: "italic",
   },
 });

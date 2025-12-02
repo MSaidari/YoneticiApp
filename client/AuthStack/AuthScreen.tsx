@@ -17,7 +17,9 @@ import { Ionicons } from "@expo/vector-icons";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { loginUser, createUser, fetchUsers } from "../Components/Api";
+import { loginUser, createUser, fetchUsers, updateData } from "../Components/Api";
+import { send, EmailJSResponseStatus } from '@emailjs/react-native';
+import * as  MailComposer from 'expo-mail-composer';
 
 export const AuthScreen = () => {
   const { login } = useAuth();
@@ -25,7 +27,17 @@ export const AuthScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [userName, setUserName] = useState("");
   const [error, setError] = useState("");
+  
+  // Şifre sıfırlama state'leri
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showCodeVerification, setShowCodeVerification] = useState(false);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [generatedCode, setGeneratedCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
 
   // Animasyon için
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -62,21 +74,6 @@ export const AuthScreen = () => {
     }
   };
 
-  /**
-   * handleQuickLogin: Hızlı giriş (email/password gerekmez)
-   */
-  const handleQuickLogin = () => {
-    console.log("Hızlı giriş - Doğrudan giriş yapılıyor");
-    setError("");
-    // Hızlı giriş için dummy user (tüm verilere erişim)
-    const quickUser = {
-      id: 0,
-      email: "quick@login.com",
-      name: "Hızlı Giriş",
-      password: ""
-    };
-    login(quickUser);
-  };
 
   /**
    * handleSignup: Yeni kullanıcı kaydı yapan fonksiyon
@@ -84,7 +81,7 @@ export const AuthScreen = () => {
    */
   const handleSignup = async () => {
     // Validasyon kontrolü
-    if (!email || !password || !confirmPassword) {
+    if (!email || !password || !confirmPassword || !userName) {
       setError("Tüm alanları doldurun!");
       return;
     }
@@ -111,7 +108,12 @@ export const AuthScreen = () => {
       }
 
       // Api.tsx'ten createUser ile yeni kullanıcı ekle
-      const response = await createUser({ email, password, name: email.split('@')[0] });
+      const response = await createUser({ 
+        email, 
+        password, 
+        name: userName,
+        role: "user"  // Yeni kullanıcılar varsayılan olarak 'user' rolü
+      });
       const userData = await response.json();
       console.log("Kayıt başarılı!");
       setError("");
@@ -119,8 +121,9 @@ export const AuthScreen = () => {
       const newUser = {
         id: userData.id,
         email: email,
-        name: email.split('@')[0],
-        password: password
+        name: userName,
+        password: password,
+        role: "user" as const  // Yeni kullanıcılar varsayılan olarak 'user' rolü
       };
       login(newUser);
     } catch (err) {
@@ -129,12 +132,188 @@ export const AuthScreen = () => {
     }
   };
 
+  /**
+   * sendEmailCode: Gmail SMTP ile gerçek email gönderme
+   */
+  const sendEmailCode = async (email: string, code: string) => {
+    try {
+      console.log('📧 Email gönderiliyor...', { email, code });
+      
+      // Tek server'dan (3001) email gönder
+      const response = await fetch("http://10.0.2.2:3001/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: email,
+          subject: "Proje Yöneticisi - Şifre Sıfırlama Kodu",
+          code: code,
+          userName: email.split('@')[0]
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        console.log('✅ Email gönderildi!', result);
+        return true;
+      } else {
+        console.error('❌ Email hatası:', result.error);
+        return false;
+      }
+
+    } catch (error: any) {
+      console.error('❌ Email gönderilemedi:', error);
+      console.log(`🔧 Geliştirme Modu: Email gönderilemedi, kod: ${code}`);
+      return false;
+    }
+  };
+
+  /**
+   * handleForgotPassword: Şifremi unuttum butonuna basıldığında çalışır
+   */
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError("Şifre sıfırlamak için email adresinizi girin!");
+      return;
+    }
+
+    // Önce email'in sistemde kayıtlı olup olmadığını kontrol et
+    try {
+      const usersResponse = await fetch("http://10.0.2.2:3001/users");
+      const users = await usersResponse.json();
+      const user = users.find((u: any) => u.email === email);
+
+      if (!user) {
+        setError("Bu email adresi sistemde kayıtlı değil!");
+        return;
+      }
+
+      // 6 haneli doğrulama kodu oluştur
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      setGeneratedCode(code);
+      
+      // Email göndermeyi dene
+      console.log('🚀 Email gönderme işlemi başlatılıyor...');
+      const emailSent = await sendEmailCode(email, code);
+      
+      if (emailSent) {
+        alert(`✅ Doğrulama kodu ${email} adresine gönderildi!`);
+        console.log(`✅ Email başarıyla gönderildi: ${email}`);
+      } else {
+        // Email gönderilemezse konsol mesajı ver
+        console.log(`⚠️ Email gönderilemedi - EmailJS ayarlarını kontrol edin`);
+        alert(`⚠️ Email gönderilemedi!\n\nGeliştirme kodu: ${code}\n\nKonsolu kontrol edin.`);
+      }
+      
+      setShowCodeVerification(true);
+      setError("");
+      
+    } catch (error) {
+      setError("Bağlantı hatası occurred!");
+      console.error("Email kontrol hatası:", error);
+    }
+  };
+
+  /**
+   * handleVerifyCode: Doğrulama kodunu kontrol eder
+   */
+  const handleVerifyCode = () => {
+    if (!verificationCode) {
+      setError("Doğrulama kodunu girin!");
+      return;
+    }
+    
+    if (verificationCode !== generatedCode) {
+      setError("Doğrulama kodu hatalı!");
+      return;
+    }
+    
+    setShowCodeVerification(false);
+    setShowPasswordReset(true);
+    setError("");
+  };
+
+  /**
+   * handlePasswordReset: Şifre sıfırlama işlemi
+   */
+  const handlePasswordReset = async () => {
+    if (!newPassword || !newPasswordConfirm) {
+      setError("Tüm alanları doldurun!");
+      return;
+    }
+    
+    if (newPassword !== newPasswordConfirm) {
+      setError("Yeni şifreler eşleşmiyor!");
+      return;
+    }
+    
+    if (newPassword.length < 3) {
+      setError("Yeni şifre en az 3 karakter olmalı!");
+      return;
+    }
+    
+    try {
+      // Önce kullanıcıyı bul
+      const usersResponse = await fetch("http://localhost:3001/users");
+      const users = await usersResponse.json();
+      const user = users.find((u: any) => u.email === email);
+
+      if (!user) {
+        setError("Kullanıcı bulunamadı!");
+        return;
+      }
+
+      // Şifreyi veritabanında güncelle
+      const updateResponse = await fetch(`http://localhost:3001/users/${user.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          password: newPassword,
+        }),
+      });
+
+      if (updateResponse.ok) {
+        alert("Şifre başarıyla değiştirildi!");
+        console.log("✅ Şifre veritabanında güncellendi:", { userId: user.id, email: email });
+        
+        // Tüm modal'ları kapat ve formu temizle
+        resetForgotPasswordStates();
+        setError("");
+      } else {
+        throw new Error("Şifre güncellenemedi");
+      }
+      
+    } catch (err) {
+      setError("Şifre değiştirme işlemi başarısız!");
+      console.error("Şifre değiştirme hatası:", err);
+    }
+  };
+
+  /**
+   * Şifre sıfırlama state'lerini temizle
+   */
+  const resetForgotPasswordStates = () => {
+    setShowForgotPassword(false);
+    setShowCodeVerification(false);
+    setShowPasswordReset(false);
+    setVerificationCode("");
+    setGeneratedCode("");
+    setNewPassword("");
+    setNewPasswordConfirm("");
+  };
+
   const switchTab = (tab: "signin" | "signup") => {
     setActiveTab(tab);
     setError("");
     setEmail("");
     setPassword("");
     setConfirmPassword("");
+    setUserName("");
+    resetForgotPasswordStates();
   };
 
   return (
@@ -173,7 +352,7 @@ export const AuthScreen = () => {
                         activeTab === "signin" && styles.tabButtonTextActive,
                       ]}
                     >
-                      Sign In
+                      Giriş Yap
                     </Text>
                   </TouchableOpacity>
 
@@ -191,7 +370,7 @@ export const AuthScreen = () => {
                         activeTab === "signup" && styles.tabButtonTextActive,
                       ]}
                     >
-                      Sign Up
+                      Kayıt Ol
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -216,12 +395,12 @@ export const AuthScreen = () => {
                 {/* Header */}
                 <View style={styles.header}>
                   <Text style={styles.title}>
-                    {activeTab === "signin" ? "Welcome Back" : "Create Account"}
+                    {activeTab === "signin" ? "Hoş Geldiniz" : "Hesap Oluştur"}
                   </Text>
                   <Text style={styles.subtitle}>
                     {activeTab === "signin"
-                      ? "Sign in to continue"
-                      : "Sign up to get started"}
+                      ? "Devam etmek için giriş yapın"
+                      : "Başlamak için kayıt olun"}
                   </Text>
                 </View>
 
@@ -236,7 +415,7 @@ export const AuthScreen = () => {
                       style={styles.icon}
                     />
                     <TextInput
-                      placeholder="Email"
+                      placeholder="E-posta"
                       placeholderTextColor="#94A3B8"
                       style={styles.input}
                       keyboardType="email-address"
@@ -257,7 +436,7 @@ export const AuthScreen = () => {
                       style={styles.icon}
                     />
                     <TextInput
-                      placeholder="Password"
+                      placeholder="Şifre"
                       placeholderTextColor="#94A3B8"
                       style={styles.input}
                       secureTextEntry
@@ -270,24 +449,44 @@ export const AuthScreen = () => {
 
                   {/* Confirm Password Input (Only for Signup) */}
                   {activeTab === "signup" && (
-                    <View style={styles.inputWrapper}>
-                      <AntDesign
-                        name="lock"
-                        size={20}
-                        color="#10B981"
-                        style={styles.icon}
-                      />
-                      <TextInput
-                        placeholder="Confirm Password"
-                        placeholderTextColor="#94A3B8"
-                        style={styles.input}
-                        secureTextEntry
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword}
-                        editable={true}
-                        selectTextOnFocus={true}
-                      />
-                    </View>
+                    <>
+                      <View style={styles.inputWrapper}>
+                        <Ionicons
+                          name="person-outline"
+                          size={20}
+                          color="#10B981"
+                          style={styles.icon}
+                        />
+                        <TextInput
+                          placeholder="Kullanıcı Adı"
+                          placeholderTextColor="#94A3B8"
+                          style={styles.input}
+                          value={userName}
+                          onChangeText={setUserName}
+                          editable={true}
+                          selectTextOnFocus={true}
+                        />
+                      </View>
+                      
+                      <View style={styles.inputWrapper}>
+                        <AntDesign
+                          name="lock"
+                          size={20}
+                          color="#10B981"
+                          style={styles.icon}
+                        />
+                        <TextInput
+                          placeholder="Şifre Onay"
+                          placeholderTextColor="#94A3B8"
+                          style={styles.input}
+                          secureTextEntry
+                          value={confirmPassword}
+                          onChangeText={setConfirmPassword}
+                          editable={true}
+                          selectTextOnFocus={true}
+                        />
+                      </View>
+                    </>
                   )}
 
                   {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -303,24 +502,118 @@ export const AuthScreen = () => {
                   activeOpacity={0.8}
                 >
                   <Text style={styles.submitButtonText}>
-                    {activeTab === "signin" ? "Sign In" : "Sign Up"}
+                    {activeTab === "signin" ? "Giriş Yap" : "Kayıt Ol"}
                   </Text>
                 </TouchableOpacity>
 
-                {/* Quick Login Button (Only for Sign In) */}
+                {/* Forgot Password Link (Only for Sign In) */}
                 {activeTab === "signin" && (
                   <TouchableOpacity
-                    style={styles.quickLoginButton}
-                    onPress={handleQuickLogin}
-                    activeOpacity={0.8}
+                    style={styles.forgotPasswordContainer}
+                    onPress={handleForgotPassword}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="flash" size={18} color="#10B981" style={{ marginRight: 8 }} />
-                    <Text style={styles.quickLoginButtonText}>Hızlı Giriş</Text>
+                    <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
                   </TouchableOpacity>
                 )}
               </View>
             </View>
           </ScrollView>
+
+          {/* Code Verification Modal */}
+          {showCodeVerification && (
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Doğrulama Kodu</Text>
+                <Text style={styles.modalSubtitle}>
+                  {email} adresine gönderilen 6 haneli kodu girin
+                </Text>
+                
+                <TextInput
+                  style={styles.codeInput}
+                  placeholder="123456"
+                  placeholderTextColor="#94A3B8"
+                  value={verificationCode}
+                  onChangeText={setVerificationCode}
+                  keyboardType="numeric"
+                  maxLength={6}
+                />
+                
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.modalCancelButton}
+                    onPress={() => {
+                      resetForgotPasswordStates();
+                      setError("");
+                    }}
+                  >
+                    <Text style={styles.modalCancelText}>İptal</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.modalConfirmButton}
+                    onPress={handleVerifyCode}
+                  >
+                    <Text style={styles.modalConfirmText}>Doğrula</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Password Reset Modal */}
+          {showPasswordReset && (
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Şifre Değiştir</Text>
+                <Text style={styles.modalSubtitle}>
+                  Yeni şifrenizi belirleyin
+                </Text>
+                
+                
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Yeni Şifre"
+                  placeholderTextColor="#94A3B8"
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry
+                />
+                
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Yeni Şifre Onay"
+                  placeholderTextColor="#94A3B8"
+                  value={newPasswordConfirm}
+                  onChangeText={setNewPasswordConfirm}
+                  secureTextEntry
+                />
+                
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.modalCancelButton}
+                    onPress={() => {
+                      resetForgotPasswordStates();
+                      setError("");
+                    }}
+                  >
+                    <Text style={styles.modalCancelText}>İptal</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.modalConfirmButton}
+                    onPress={handlePasswordReset}
+                  >
+                    <Text style={styles.modalConfirmText}>Değiştir</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
         </ImageBackground>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
@@ -475,5 +768,103 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     marginTop: 8,
+  },
+  forgotPasswordContainer: {
+    alignItems: "center",
+    marginTop: 16,
+  },
+  forgotPasswordText: {
+    color: "#2563EB", // Küçük mavi renk
+    fontSize: 14,
+    textDecorationLine: "underline",
+  },
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 24,
+    margin: 20,
+    width: "90%",
+    maxWidth: 400,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#1F2937",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: "#6B7280",
+    textAlign: "center",
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  codeInput: {
+    backgroundColor: "#F9FAFB",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
+    height: 50,
+    paddingHorizontal: 16,
+    fontSize: 18,
+    textAlign: "center",
+    letterSpacing: 8,
+    color: "#1F2937",
+    marginBottom: 16,
+  },
+  modalInput: {
+    backgroundColor: "#F9FAFB",
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
+    height: 50,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: "#1F2937",
+    marginBottom: 16,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  modalCancelButton: {
+    flex: 1,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  modalCancelText: {
+    color: "#6B7280",
+    fontSize: 16,
+    fontWeight: "500",
+  },
+  modalConfirmButton: {
+    flex: 1,
+    backgroundColor: "#2563EB",
+    borderRadius: 8,
+    height: 48,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+  },
+  modalConfirmText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

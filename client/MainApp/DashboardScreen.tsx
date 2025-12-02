@@ -2,17 +2,18 @@ import { Text, View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { useAuth } from "../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useState, useEffect } from "react";
-import { fetchtasks, fetchdomanins, fetchPasswords } from "../Components/Api";
+import { fetchtasks, fetchdomanins, fetchPasswords, fetchNotes } from "../Components/Api";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 
 export const Dashboard = () => {
-  const { logout, currentUser } = useAuth();
+  const { logout, currentUser, isAdmin } = useAuth();
   const navigation = useNavigation();
   const [taskCount, setTaskCount] = useState(0);
   const [domainCount, setDomainCount] = useState(0);
   const [passwordCount, setPasswordCount] = useState(0);
   const [completedCount, setCompletedCount] = useState(0);
+  const [noteCount, setNoteCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = useCallback(async () => {
@@ -43,6 +44,13 @@ export const Dashboard = () => {
         const passwordsData = await passwordsResponse.json();
         setPasswordCount(passwordsData.length);
       }
+      
+      // Notları çek
+      const notesResponse = await fetchNotes(userId);
+      if (notesResponse.ok) {
+        const notesData = await notesResponse.json();
+        setNoteCount(notesData.length);
+      }
     } catch (error) {
       console.error("Dashboard veri çekme hatası:", error);
     } finally {
@@ -61,12 +69,24 @@ export const Dashboard = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
+        <View style={styles.headerLeft}>
           <Text style={styles.greeting}>Hoş Geldiniz</Text>
+          <Text style={styles.userName}>
+            {currentUser?.name}
+          </Text>
+          {isAdmin && <Text style={styles.adminBadge}>Admin</Text>}
         </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-        </TouchableOpacity>
+        <View style={styles.headerButtons}>
+          <TouchableOpacity 
+            style={styles.notesButton} 
+            onPress={() => navigation.navigate('Notlar' as never)}
+          >
+            <Ionicons name="document-text-outline" size={20} color="#8B5CF6" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+            <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView 
@@ -177,14 +197,46 @@ const styles = StyleSheet.create({
     borderBottomColor: "#E2E8F0",
   },
   greeting: {
-    fontSize: 24,
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+  userName: {
+    fontSize: 28,
     fontWeight: "bold",
     color: "#1E293B",
+    marginTop: 4,
+  },
+  adminBadge: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#8B5CF6",
+    backgroundColor: "#EDE9FE",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginTop: 4,
+    alignSelf: "flex-start",
+  },
+  headerLeft: {
+    flex: 1,
   },
   subtitle: {
     fontSize: 14,
     color: "#64748B",
     marginTop: 2,
+  },
+  headerButtons: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  notesButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#EDE9FE",
+    alignItems: "center",
+    justifyContent: "center",
   },
   logoutButton: {
     width: 44,

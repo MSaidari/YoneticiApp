@@ -10,13 +10,15 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
-import { fetchtasks, addTask,fetchPasswords, deletePassword } from "../Components/Api";
+import { fetchtasks, addTask,fetchPasswords, deletePassword, fetchDataWithUserInfo } from "../Components/Api";
 import { PasswordCard } from "../Components/passwordcard";
 import { useAuth } from "../context/AuthContext";
+import { AddButton } from "../Components/addmodal";
+import { PasswordAddModal } from "./PasswordAddModal";
 
 export const SupportPassword = () => {
   // Auth Context'ten kullanıcı bilgilerini al
-  const { currentUser } = useAuth();
+  const { currentUser, isAdmin } = useAuth();
   
   // State'ler:
   // passwords: API'den çekilen şifrelerin listesi
@@ -27,6 +29,10 @@ export const SupportPassword = () => {
   
   // error: Hata durumunda mesaj göstermek için
   const [error, setError] = useState("");
+  
+  // Modal state'leri
+  const [modalVisible, setModalVisible] = useState(false);
+  const [editingPassword, setEditingPassword] = useState<any>(null);
   
 
   /**
@@ -41,17 +47,10 @@ export const SupportPassword = () => {
       setLoading(true); // Yükleme başladı
       setError(""); // Önceki hataları temizle
       
-      // API'den şifreleri çek (kullanıcı tabanlı veya hızlı giriş için tümü)
+      // Admin ise veya yetki varsa tüm şifreleri + kullanıcı bilgisi getir
       const userId = currentUser?.id === 0 ? undefined : currentUser?.id;
-      const response = await fetchPasswords(userId);
-      
-      // Response kontrolü
-      if (!response.ok) {
-        throw new Error("Şifreler yüklenemedi");
-      }
-      
-      // JSON'a parse et
-      const passwordsData = await response.json();
+      const hasPermission = currentUser?.permissions?.passwords || false;
+      const passwordsData = await fetchDataWithUserInfo("passwords", userId, isAdmin, hasPermission);
       
       // State'e kaydet
       setPasswords(passwordsData);
@@ -78,23 +77,26 @@ export const SupportPassword = () => {
   );
 
   /**
-   * useEffect: Süresi dolmuş şifreleri otomatik siler
-   * - Her 1 saatte bir kontrol eder
-   * - hour <= 0 olan şifreleri bulur ve DB'den siler
+   * useEffect: Günlük şifreleri otomatik siler (her gün 00:00'da)
+   * - Oluşturulma tarihinden 1 gün geçmişse siler
    */
   useEffect(() => {
-    const checkAndDeleteExpiredPasswords = async () => {
-      // Süresi dolmuş şifreleri bul
-      const expiredPasswords = passwords.filter((p: any) => {
-        const hour = parseInt(p.hour_remaining) || 0;
-        return hour <= 0;
+    const checkAndDeleteOldPasswords = async () => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Bugünün başlangıcı
+      
+      // 1 günden eski şifreleri bul
+      const oldPasswords = passwords.filter((p: any) => {
+        const createdDate = new Date(p.createdAt);
+        createdDate.setHours(0, 0, 0, 0);
+        return createdDate < today;
       });
 
-      // Eğer süresi dolmuş şifre varsa sil
-      if (expiredPasswords.length > 0) {
-        console.log(`${expiredPasswords.length} süresi dolmuş şifre siliniyor...`);
+      // Eğer eski şifre varsa sil
+      if (oldPasswords.length > 0) {
+        console.log(`${oldPasswords.length} eski şifre siliniyor...`);
         
-        for (const password of expiredPasswords) {
+        for (const password of oldPasswords) {
           try {
             await deletePassword((password as any).id);
             console.log(`Şifre DB'den silindi: ${(password as any).id}`);
@@ -110,14 +112,29 @@ export const SupportPassword = () => {
 
     // İlk yükleme kontrolü
     if (passwords.length > 0) {
-      checkAndDeleteExpiredPasswords();
+      checkAndDeleteOldPasswords();
     }
 
-    // 1 saatte bir kontrol et (3600000 ms = 1 saat)
-    const interval = setInterval(checkAndDeleteExpiredPasswords, 3600000);
+    // Her gece 00:00'da kontrol et
+    const now = new Date();
+    const night = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1, // Yarın
+      0, 0, 0, 0 // 00:00:00
+    );
+    const msUntilMidnight = night.getTime() - now.getTime();
+    
+    // İlk kontrol yarın gece 00:00'da
+    const timeout = setTimeout(() => {
+      checkAndDeleteOldPasswords();
+      // Sonra her 24 saatte bir kontrol et
+      const interval = setInterval(checkAndDeleteOldPasswords, 86400000); // 24 saat
+      return () => clearInterval(interval);
+    }, msUntilMidnight);
 
-    // Cleanup: Component unmount olduğunda interval'i temizle
-    return () => clearInterval(interval);
+    // Cleanup: Component unmount olduğunda timeout'u temizle
+    return () => clearTimeout(timeout);
   }, [passwords]); // passwords değiştiğinde yeniden çalış
 
 
@@ -152,18 +169,25 @@ export const SupportPassword = () => {
   */
   /**
    * renderTaskItem: FlatList için her şifre kartını render eder
-   * - item: Şifre objesi (id, server, user_code, password, hour)
+   * - item: Şifre objesi (id, server, user_code, password, createdAt)
    * - PasswordCard component'ine props olarak gönderir
    */
-  const renderTaskItem = ({ item }: any) => (
+  const renderTaskItem = ({ item }: any) => {
+    return (
     <PasswordCard
       id={item.id}
       server={item.sunucu}
       user_code={item.user_code}
       password={item.password}
-      hour={parseInt(item.hour_remaining) || 0}
+      userName={isAdmin ? item.userName : undefined}
+      onEdit={() => {
+        setEditingPassword(item);
+        setModalVisible(true);
+      }}
+      onDelete={() => deletePassword(item.id).then(() => handleFetchpassword()).catch((err) => console.error(err))}
     />
   );
+  };
 
   /**
    * Loading State: Veriler yüklenirken gösterilir
@@ -234,6 +258,28 @@ export const SupportPassword = () => {
         showsVerticalScrollIndicator={false}
       />
 
+      {/* Add Button */}
+      <AddButton
+        onPress={() => {
+          setEditingPassword(null);
+          setModalVisible(true);
+        }}
+      />
+
+      {/* Add/Edit Modal */}
+      <PasswordAddModal
+        visible={modalVisible}
+        onClose={() => {
+          setModalVisible(false);
+          setEditingPassword(null);
+        }}
+        onSave={() => {
+          setModalVisible(false);
+          setEditingPassword(null);
+          handleFetchpassword();
+        }}
+        editingPassword={editingPassword}
+      />
     </View>
   );
 };

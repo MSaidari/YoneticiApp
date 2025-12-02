@@ -1,8 +1,12 @@
 import { Platform } from "react-native";
 
 // API URL'ini belirle (Android emulator vs iOS simulator)
-const URL = "https://my-json-server.typicode.com/MSaidari/YoneticiApp/";
+const URL =
+  Platform.OS === "android"
+    ? "http://10.0.2.2:3001/" // Android için özel IP
+    : "http://localhost:3001/"; // iOS için localhost
 
+// "https://my-json-server.typicode.com/MSaidari/YoneticiApp/"
 // ============================================================================
 // KULLANICI YÖNETİMİ
 // ============================================================================
@@ -33,6 +37,56 @@ export const loginUser = async (email: string, password: string) => {
 // ============================================================================
 // GENEL CRUD FONKSİYONLARI
 // ============================================================================
+
+/**
+ * fetchDataWithUserInfo - Veriyi kullanıcı bilgileriyle birlikte getirir
+ * @param endpoint - API endpoint
+ * @param userId - Kullanıcı ID (admin için undefined olabilir)
+ * @param isAdmin - Admin kullanıcı mı?
+ * @param hasPermission - Kullanıcının bu veriye erişim yetkisi var mı?
+ * @returns Kullanıcı bilgileriyle zenginleştirilmiş veri
+ */
+export const fetchDataWithUserInfo = async (
+  endpoint: string,
+  userId?: number | string,
+  isAdmin: boolean = false,
+  hasPermission: boolean = false
+) => {
+  try {
+    // Admin ise veya yetki varsa tüm verileri getir, yoksa sadece kullanıcınınkileri
+    const shouldFetchAll = isAdmin || hasPermission;
+    const dataResponse = await fetchData(endpoint, shouldFetchAll ? undefined : userId);
+    const data = await dataResponse.json();
+    
+    // Eğer yetki varsa ama admin değilse, kullanıcı bilgisi EKLEMEDEN dön
+    if (hasPermission && !isAdmin) {
+      return data;
+    }
+    
+    // Eğer admin değilse ve yetki yoksa, direkt dön
+    if (!isAdmin) {
+      return data;
+    }
+    
+    // SADECE Admin ise, kullanıcı bilgilerini ekle
+    const usersResponse = await fetchData("users");
+    const users = await usersResponse.json();
+    
+    // Her veriye kullanıcı bilgisini ekle
+    const enrichedData = data.map((item: any) => {
+      const user = users.find((u: any) => u.id == item.userId);
+      return {
+        ...item,
+        userName: user?.name || "Bilinmeyen Kullanıcı"
+      };
+    });
+    
+    return enrichedData;
+  } catch (error) {
+    console.error(`${endpoint} veri alma hatası:`, error);
+    throw error;
+  }
+};
 
 /**
  * FETCH - GET isteği ile veri al (kullanıcı tabanlı)
@@ -87,10 +141,10 @@ export const createData = async (
 };
 
 /**
- * UPDATE - PUT isteği ile mevcut veriyi güncelle
+ * UPDATE - PATCH isteği ile mevcut veriyi güncelle
  * @param endpoint - API endpoint (örn: "tasks", "domains", "passwords")
  * @param id - Güncellenecek verinin ID'si
- * @param data - Güncelleme verisi
+ * @param data - Güncelleme verisi (sadece değişen alanlar)
  * @returns Response objesi
  */
 export const updateData = async (
@@ -100,7 +154,7 @@ export const updateData = async (
 ) => {
   try {
     const response = await fetch(URL + `${endpoint}/${id}`, {
-      method: "PUT",
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
@@ -145,7 +199,16 @@ export const createUser = (data: {
   email: string;
   password: string;
   name?: string;
+  role?: string;
 }) => createData("users", data);
+export const updateUserPermissions = (
+  userId: number | string,
+  permissions: {
+    domains?: boolean;
+    tasks?: boolean;
+    passwords?: boolean;
+  }
+) => updateData("users", userId, { permissions });
 
 // Tasks
 export const fetchtasks = (userId?: number | string) =>
@@ -193,12 +256,32 @@ export const addPassword = (
     sunucu: string;
     user_code: string;
     password: string;
-    hour_remaining: number | any;
+    createdAt: string;
   },
   userId?: number | string
 ) => createData("passwords", data, userId);
 export const deletePassword = (id: number | string) =>
   deleteData("passwords", id);
+
+// Notes
+export const fetchNotes = (userId?: number | string) =>
+  fetchData("notes", userId);
+export const addNote = (
+  data: {
+    title: string;
+    content: string;
+    createdAt: string;
+  },
+  userId?: number | string
+) => createData("notes", data, userId);
+export const updateNote = (
+  id: number | string,
+  data: {
+    title?: string;
+    content?: string;
+  }
+) => updateData("notes", id, data);
+export const deleteNote = (id: number | string) => deleteData("notes", id);
 
 // Default export
 export default edittask;
