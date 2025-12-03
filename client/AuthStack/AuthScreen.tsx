@@ -133,39 +133,33 @@ export const AuthScreen = () => {
   };
 
   /**
-   * sendEmailCode: Gmail SMTP ile gerçek email gönderme
+   * sendEmailCode: EmailJS ile React Native'den email gönderme
    */
-  const sendEmailCode = async (email: string, code: string) => {
+  const sendEmailCode = async (email: string, code: string, userName: string) => {
     try {
-      console.log('📧 Email gönderiliyor...', { email, code });
+      console.log('📧 EmailJS ile email gönderiliyor...', { email, code, userName });
       
-      // Tek server'dan (3001) email gönder
-      const response = await fetch("http://10.0.2.2:3001/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      // EmailJS React Native paketi ile gönder
+      await send(
+        'service_3opw15v', // EmailJS Service ID'nizi buraya yazın
+        'template_vi8z7df', // EmailJS Template ID'nizi buraya yazın
+        {
+          to_email: email,
+          to_name: userName,
+          verification_code: code,
+          subject: "YonetimApp - Şifre Sıfırlama Kodu",
         },
-        body: JSON.stringify({
-          to: email,
-          subject: "Proje Yöneticisi - Şifre Sıfırlama Kodu",
-          code: code,
-          userName: email.split('@')[0]
-        }),
-      });
+        {
+          publicKey: 'jJcyM6dYafOOHXD7C', // EmailJS Public Key'inizi buraya yazın
+        }
+      );
 
-      const result = await response.json();
-
-      if (response.ok) {
-        console.log('✅ Email gönderildi!', result);
-        return true;
-      } else {
-        console.error('❌ Email hatası:', result.error);
-        return false;
-      }
+      console.log('✅ Email başarıyla gönderildi!');
+      return true;
 
     } catch (error: any) {
-      console.error('❌ Email gönderilemedi:', error);
-      console.log(`🔧 Geliştirme Modu: Email gönderilemedi, kod: ${code}`);
+      console.error('❌ EmailJS hatası:', error);
+      console.log('Hata detayı:', error.text || error.message);
       return false;
     }
   };
@@ -196,7 +190,7 @@ export const AuthScreen = () => {
       
       // Email göndermeyi dene
       console.log('🚀 Email gönderme işlemi başlatılıyor...');
-      const emailSent = await sendEmailCode(email, code);
+      const emailSent = await sendEmailCode(email, code, user.name);
       
       if (emailSent) {
         alert(`✅ Doğrulama kodu ${email} adresine gönderildi!`);
@@ -256,7 +250,7 @@ export const AuthScreen = () => {
     
     try {
       // Önce kullanıcıyı bul
-      const usersResponse = await fetch("http://localhost:3001/users");
+      const usersResponse = await fetch("http://10.0.2.2:3001/users");
       const users = await usersResponse.json();
       const user = users.find((u: any) => u.email === email);
 
@@ -266,7 +260,7 @@ export const AuthScreen = () => {
       }
 
       // Şifreyi veritabanında güncelle
-      const updateResponse = await fetch(`http://localhost:3001/users/${user.id}`, {
+      const updateResponse = await fetch(`http://10.0.2.2:3001/users/${user.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -507,7 +501,8 @@ export const AuthScreen = () => {
                 </TouchableOpacity>
 
                 {/* Forgot Password Link (Only for Sign In) */}
-                {activeTab === "signin" && (
+                <View style={{ alignItems: "center" }}>
+                  {activeTab === "signin" && (
                   <TouchableOpacity
                     style={styles.forgotPasswordContainer}
                     onPress={handleForgotPassword}
@@ -516,6 +511,8 @@ export const AuthScreen = () => {
                     <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
                   </TouchableOpacity>
                 )}
+                </View>
+                
               </View>
             </View>
           </ScrollView>

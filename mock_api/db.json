@@ -89,8 +89,8 @@
     {
       "id": "4fc1",
       "email": "sait125152@gmail.com",
-      "password": "12345",
-      "name": "sait1223ari",
+      "password": "123",
+      "name": "sait ari",
       "role": "user",
       "permissions": {
         "domains": false,
@@ -109,34 +109,16 @@
         "tasks": false,
         "passwords": false
       }
-    }
-  ],
-  "passwords": [
-    {
-      "id": "1",
-      "sunucu": "diademo",
-      "user_code": "demo",
-      "password": "dem",
-      "createdAt": "2025-12-02T10:30:00.000Z",
-      "userId": 1
     },
     {
-      "id": "2",
-      "sunucu": "diademo2",
-      "user_code": "admin",
-      "password": "secret12443",
-      "createdAt": "2025-12-02T10:30:00.000Z",
-      "userId": 1
-    },
-    {
-      "id": "3",
-      "sunucu": "başka sunucu",
-      "user_code": "user2uu",
-      "password": "pass456yy",
-      "createdAt": "2025-12-02T10:30:00.000Z",
-      "userId": 2
+      "id": "4e88",
+      "email": "sudeozsoy41@gmail.com",
+      "password": "123",
+      "name": "sude",
+      "role": "user"
     }
   ],
+  "passwords": [],
   "notes": [
     {
       "id": "17da",
