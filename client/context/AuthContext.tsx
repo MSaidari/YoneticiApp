@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /**
  * AuthContext: Kullanıcının giriş durumunu GLOBAL olarak yöneten Context
@@ -72,21 +73,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // Login fonksiyonu: Kullanıcı bilgileriyle giriş yapar
-  const login = (user: User) => {
+  const login = async (user: User) => {
     console.log("Login - isLoggedIn: true, User:", user.email, "Role:", user.role);
     setCurrentUser(user);     // Kullanıcı bilgilerini kaydet
     setIsLoggedIn(true);      // State'i true yap → App.tsx otomatik Dashboard'a geçer
+    
+    // AsyncStorage'a kullanıcı bilgisini kaydet (background task için)
+    try {
+      await AsyncStorage.setItem('currentUser', JSON.stringify(user));
+      console.log('✅ Kullanıcı bilgisi AsyncStorage\'a kaydedildi');
+    } catch (error) {
+      console.error('❌ AsyncStorage kayıt hatası:', error);
+    }
   };
 
   // Admin kontrolü: currentUser'dan hesaplanır
   const isAdmin = currentUser?.role === "admin";
 
   // Logout fonksiyonu: Kullanıcı çıkış yapınca çağrılır
-  const logout = () => {
+  const logout = async () => {
     console.log("Logout - isLoggedIn: false");
     setCurrentUser(null);     // Kullanıcı bilgilerini temizle
     setIsLoggedIn(false);     // State'i false yap → App.tsx otomatik Login'e döner
     setShowSignup(false);     // Login ekranına dön
+    
+    // AsyncStorage'dan kullanıcı bilgisini temizle
+    try {
+      await AsyncStorage.removeItem('currentUser');
+      console.log('✅ AsyncStorage temizlendi');
+    } catch (error) {
+      console.error('❌ AsyncStorage temizleme hatası:', error);
+    }
   };
   
   // Signup ekranına git

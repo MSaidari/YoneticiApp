@@ -153,9 +153,6 @@ export const DomainCard: React.FC<DomainCardProps> = ({
           )}
         </View>
       )}
-
-
-      
     </CardContainer>
     </>
   );

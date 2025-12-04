@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { MainAppTabs } from "./Components/TabBar";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Notes } from "./MainApp/notes";
 import { NoteEditor } from "./MainApp/NoteEditor";
+import { registerDomainExpiryTask } from "./services/domainExpiryTask";
 
 const Stack = createStackNavigator();
 
@@ -31,6 +32,11 @@ const RootNavigator = () => {
 };
 
 export default function App() {
+  // Uygulama başladığında background task'ı kaydet
+  useEffect(() => {
+    registerDomainExpiryTask().catch(console.error);
+  }, []);
+
   return (
     <SafeAreaProvider>
       <AuthProvider>

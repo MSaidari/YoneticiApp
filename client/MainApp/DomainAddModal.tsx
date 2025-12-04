@@ -9,9 +9,12 @@ import {
   TouchableWithoutFeedback,
   ScrollView,
   Alert,
+  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { addDomain, updateData } from "../Components/Api";
+import { useAuth } from "../context/AuthContext";
 
 interface DomainAddModalProps {
   visible: boolean;
@@ -31,9 +34,11 @@ export const DomainAddModal: React.FC<DomainAddModalProps> = ({
   onSave,
   editingDomain,
 }) => {
+  const { currentUser } = useAuth(); // Giriş yapan kullanıcının bilgisini al
   const [domainName, setDomainName] = useState("");
   const [provider, setProvider] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
+  const [expiryDate, setExpiryDate] = useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Edit mode için verileri doldur
@@ -41,7 +46,7 @@ export const DomainAddModal: React.FC<DomainAddModalProps> = ({
     if (editingDomain) {
       setDomainName(editingDomain.domain);
       setProvider(editingDomain.provider);
-      setExpiryDate(editingDomain.date || "");
+      setExpiryDate(editingDomain.date ? new Date(editingDomain.date) : null);
     } else {
       handleClear();
     }
@@ -58,14 +63,21 @@ export const DomainAddModal: React.FC<DomainAddModalProps> = ({
       return;
     }
 
+    if (!expiryDate) {
+      Alert.alert("Hata", "Son kullanma tarihi seçilmelidir!");
+      return;
+    }
+
     setLoading(true);
     try {
+      const formattedDate = expiryDate.toISOString().split('T')[0]; // YYYY-MM-DD formatında
+
       if (editingDomain) {
         // Edit mode - güncelle
         await updateData("domains", editingDomain.id, {
           domain: domainName.trim().toLowerCase(),
           provider: provider.trim(),
-          date: expiryDate || new Date().toISOString(),
+          date: formattedDate,
         });
       } else {
         // Add mode - yeni ekle
@@ -73,9 +85,9 @@ export const DomainAddModal: React.FC<DomainAddModalProps> = ({
           {
             domain: domainName.trim().toLowerCase(),
             provider: provider.trim(),
-            date: expiryDate || new Date().toISOString(),
+            date: formattedDate,
           },
-          1 // userId
+          currentUser?.id || 1 // Giriş yapan kullanıcının ID'si
         );
       }
       
@@ -83,7 +95,7 @@ export const DomainAddModal: React.FC<DomainAddModalProps> = ({
       onSave({
         domain: domainName.trim().toLowerCase(),
         provider: provider.trim(),
-        date: expiryDate || new Date().toISOString(),
+        date: formattedDate,
       });
 
       // Formu temizle
@@ -99,7 +111,22 @@ export const DomainAddModal: React.FC<DomainAddModalProps> = ({
   const handleClear = () => {
     setDomainName("");
     setProvider("");
-    setExpiryDate("");
+    setExpiryDate(null);
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setExpiryDate(selectedDate);
+    }
+  };
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return "Tarih seçin";
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   };
 
   const handleClose = () => {
@@ -173,24 +200,49 @@ export const DomainAddModal: React.FC<DomainAddModalProps> = ({
 
                 {/* Expiry Date */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Son Kullanma Tarihi</Text>
-                  <View style={styles.inputWrapper}>
+                  <Text style={styles.label}>Son Kullanma Tarihi *</Text>
+                  <TouchableOpacity
+                    style={[
+                      styles.inputWrapper,
+                      !expiryDate && styles.inputWrapperEmpty,
+                    ]}
+                    onPress={() => setShowDatePicker(true)}
+                  >
                     <Ionicons
                       name="calendar-outline"
                       size={20}
-                      color="#6366F1"
+                      color={expiryDate ? "#6366F1" : "#94A3B8"}
                       style={styles.icon}
                     />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="örnek: 2025-12-31"
-                      placeholderTextColor="#94A3B8"
-                      value={expiryDate}
-                      onChangeText={setExpiryDate}
+                    <Text
+                      style={[
+                        styles.dateText,
+                        !expiryDate && styles.dateTextPlaceholder,
+                      ]}
+                    >
+                      {formatDate(expiryDate)}
+                    </Text>
+                    <Ionicons
+                      name="chevron-down"
+                      size={20}
+                      color="#94A3B8"
                     />
-                  </View>
-                  <Text style={styles.hint}>Format: YYYY-MM-DD</Text>
+                  </TouchableOpacity>
+                  {!expiryDate && (
+                    <Text style={styles.requiredHint}>* Zorunlu alan</Text>
+                  )}
                 </View>
+
+                {/* Date Picker */}
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={expiryDate || new Date()}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={handleDateChange}
+                    minimumDate={new Date()}
+                  />
+                )}
               </ScrollView>
 
               {/* Modal Footer */}
@@ -285,6 +337,25 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     marginTop: 6,
     marginLeft: 4,
+  },
+  requiredHint: {
+    fontSize: 12,
+    color: "#EF4444",
+    marginTop: 6,
+    marginLeft: 4,
+    fontWeight: "600",
+  },
+  inputWrapperEmpty: {
+    borderColor: "#FECACA",
+    backgroundColor: "#FEF2F2",
+  },
+  dateText: {
+    flex: 1,
+    fontSize: 16,
+    color: "#1E293B",
+  },
+  dateTextPlaceholder: {
+    color: "#94A3B8",
   },
   modalFooter: {
     flexDirection: "row",
