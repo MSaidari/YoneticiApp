@@ -218,8 +218,8 @@ export const SupportPassword = () => {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Görevlerim</Text>
-          <Text style={styles.headerSubtitle}>0 görev</Text>
+          <Text style={styles.headerTitle}>Destek Şifreleri</Text>
+          <Text style={styles.headerSubtitle}>{passwords.length} şifre</Text>
         </View>
         <View style={styles.centerContainer}>
           <Text style={styles.emptyText}>Henüz Şifre eklenmedi.</Text>
@@ -227,6 +227,29 @@ export const SupportPassword = () => {
             Liste şuanda boş. Destek şifrelerini ekleyin.
           </Text>
         </View>
+        
+        {/* Add Button */}
+        <AddButton
+          onPress={() => {
+            setEditingPassword(null);
+            setModalVisible(true);
+          }}
+        />
+
+        {/* Add/Edit Modal */}
+        <PasswordAddModal
+          visible={modalVisible}
+          onClose={() => {
+            setModalVisible(false);
+            setEditingPassword(null);
+          }}
+          onSave={() => {
+            setModalVisible(false);
+            setEditingPassword(null);
+            handleFetchpassword();
+          }}
+          editingPassword={editingPassword}
+        />
       </View>
     );
   }
@@ -238,8 +261,18 @@ export const SupportPassword = () => {
     <View style={styles.container}>
       {/* Header: Başlık + istatistikler */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Destek Şifreleri</Text>
-        
+        {/* Icon Container */}
+        <View style={styles.iconContainer}>
+          <Ionicons name="key-outline" size={32} color="#F59E0B" />
+        </View>
+
+        {/* Text Container */}
+        <View style={styles.headerTextContainer}>
+          <Text style={styles.headerTitle}>Destek Şifreleri</Text>
+          <Text style={styles.headerSubtitle}>
+            {passwords.length} şifre • Güvenli şifre deposu
+          </Text>
+        </View>
       </View>
 
       {/* FlatList: Görev kartlarının listesi */}
@@ -292,21 +325,40 @@ const styles = StyleSheet.create({
   },
   // Header: Sayfa başlığı
   header: {
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 16,
     backgroundColor: "#FFFFFF",
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
+    gap: 16,
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: "#FEF3C7",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#F59E0B",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  headerTextContainer: {
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#1E293B",
-    marginBottom: 4,
+    marginBottom: 2,
   },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     color: "#64748B",
   },
   // FlatList content

@@ -78,6 +78,12 @@ export const Dashboard = () => {
         </View>
         <View style={styles.headerButtons}>
           <TouchableOpacity 
+            style={styles.calendarButton} 
+            onPress={() => navigation.navigate('Takvim' as never)}
+          >
+            <Ionicons name="calendar-outline" size={20} color="#6366F1" />
+          </TouchableOpacity>
+          <TouchableOpacity 
             style={styles.notesButton} 
             onPress={() => navigation.navigate('Notlar' as never)}
           >
@@ -229,6 +235,14 @@ const styles = StyleSheet.create({
   headerButtons: {
     flexDirection: "row",
     gap: 8,
+  },
+  calendarButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "#EEF2FF",
+    alignItems: "center",
+    justifyContent: "center",
   },
   notesButton: {
     width: 44,

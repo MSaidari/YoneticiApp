@@ -8,13 +8,6 @@
       "userId": 2
     },
     {
-      "id": "bf3f",
-      "domain": "tyttt",
-      "provider": "tyttty",
-      "date": "2025-12-04",
-      "userId": 1
-    },
-    {
       "id": "ee18",
       "domain": "denemee",
       "provider": "buda deneme",
@@ -26,13 +19,6 @@
       "domain": "deneme22",
       "provider": "denem",
       "date": "2026-12-04",
-      "userId": "2"
-    },
-    {
-      "id": "d52b",
-      "domain": "gjghkgkygy",
-      "provider": "gykgykyg",
-      "date": "2025-12-05",
       "userId": "2"
     },
     {
@@ -48,6 +34,13 @@
       "provider": "Swsgb",
       "date": "2026-01-04",
       "userId": "4fc1"
+    },
+    {
+      "id": "cf5f",
+      "domain": "denneme",
+      "provider": "GoDaddy",
+      "date": "2026-01-05",
+      "userId": "2968"
     }
   ],
   "tasks": [
@@ -77,6 +70,51 @@
       "priority": "medium",
       "due_date": "2025-12-01T14:17:00.000Z",
       "userId": "2"
+    },
+    {
+      "id": "1764920607212",
+      "title": "Vghh",
+      "description": "",
+      "status": "done",
+      "priority": "medium",
+      "due_date": "2025-12-04T07:43:00.000Z",
+      "userId": "4fc1"
+    },
+    {
+      "id": "1764921887646",
+      "title": "Dddd",
+      "description": "Ggg",
+      "status": "todo",
+      "priority": "medium",
+      "due_date": "2025-12-05T08:04:47.646Z",
+      "userId": "4fc1"
+    },
+    {
+      "id": "1764923192077",
+      "title": "Rfvvvv",
+      "description": "Chdgg",
+      "status": "progress",
+      "priority": "medium",
+      "due_date": "2026-01-15T08:26:00.000Z",
+      "userId": "4fc1"
+    },
+    {
+      "id": "1764924759777",
+      "title": "Rerere",
+      "description": "",
+      "status": "todo",
+      "priority": "medium",
+      "due_date": "2025-12-05T08:52:39.777Z",
+      "userId": "4fc1"
+    },
+    {
+      "id": "1764944023266",
+      "title": "Ggggggg",
+      "description": "",
+      "status": "progress",
+      "priority": "medium",
+      "due_date": "2025-12-13T14:13:00.000Z",
+      "userId": "2968"
     }
   ],
   "users": [
@@ -151,9 +189,30 @@
         "tasks": false,
         "passwords": false
       }
+    },
+    {
+      "id": "2968",
+      "email": "said03m7@gmail.com",
+      "password": "111",
+      "name": "sado",
+      "role": "user",
+      "permissions": {
+        "domains": true,
+        "tasks": true,
+        "passwords": false
+      }
     }
   ],
-  "passwords": [],
+  "passwords": [
+    {
+      "id": "86bb",
+      "sunucu": "Ddddd",
+      "user_code": "gggg",
+      "password": "qqqw",
+      "createdAt": "2025-12-05T09:15:07.946Z",
+      "userId": "4fc1"
+    }
+  ],
   "notes": [
     {
       "id": "17da",
@@ -175,6 +234,13 @@
       "content": "Frfdgffff",
       "createdAt": "2025-12-02T14:06:43.399Z",
       "userId": "1"
+    },
+    {
+      "id": "a488",
+      "title": "Eekk",
+      "content": "Fjhffgjkgkddd",
+      "createdAt": "2025-12-05T07:40:29.696Z",
+      "userId": "4fc1"
     }
   ]
 }

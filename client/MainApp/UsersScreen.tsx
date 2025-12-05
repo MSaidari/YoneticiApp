@@ -47,8 +47,17 @@ export const UsersScreen = () => {
       const response = await fetchUsers();
       const usersData = await response.json();
       
-      // Admin olmayan kullanıcıları filtrele
-      const nonAdminUsers = usersData.filter((u: User) => u.role !== "admin");
+      // Admin olmayan kullanıcıları filtrele ve permissions kontrolü yap
+      const nonAdminUsers = usersData
+        .filter((u: User) => u.role !== "admin")
+        .map((u: User) => ({
+          ...u,
+          permissions: u.permissions || {
+            domains: false,
+            tasks: false,
+            passwords: false
+          }
+        }));
       setUsers(nonAdminUsers);
       
       console.log("Kullanıcılar yüklendi:", nonAdminUsers.length, "kullanıcı");

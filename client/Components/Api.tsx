@@ -200,6 +200,11 @@ export const createUser = (data: {
   password: string;
   name?: string;
   role?: string;
+  permissions?: {
+    domains: boolean;
+    tasks: boolean;
+    passwords: boolean;
+  };
 }) => createData("users", data);
 export const updateUserPermissions = (
   userId: number | string,

@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { addPassword, updateData } from "../Components/Api";
+import { useAuth } from "../context/AuthContext";
 
 interface PasswordAddModalProps {
   visible: boolean;
@@ -31,6 +32,7 @@ export const PasswordAddModal: React.FC<PasswordAddModalProps> = ({
   onSave,
   editingPassword,
 }) => {
+  const { currentUser } = useAuth(); // Giriş yapan kullanıcının bilgisini al
   const [server, setServer] = useState("");
   const [userCode, setUserCode] = useState("");
   const [password, setPassword] = useState("");
@@ -81,7 +83,7 @@ export const PasswordAddModal: React.FC<PasswordAddModalProps> = ({
             password: password.trim(),
             createdAt: new Date().toISOString(),
           },
-          1 // userId
+          currentUser?.id || 1 // Giriş yapan kullanıcının ID'si
         );
       }
       

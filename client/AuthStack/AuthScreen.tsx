@@ -34,6 +34,7 @@ export const AuthScreen = () => {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [showCodeVerification, setShowCodeVerification] = useState(false);
   const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -112,7 +113,12 @@ export const AuthScreen = () => {
         email, 
         password, 
         name: userName,
-        role: "user"  // Yeni kullanıcılar varsayılan olarak 'user' rolü
+        role: "user",  // Yeni kullanıcılar varsayılan olarak 'user' rolü
+        permissions: {
+          domains: false,
+          tasks: false,
+          passwords: false
+        }
       });
       const userData = await response.json();
       console.log("Kayıt başarılı!");
@@ -168,8 +174,8 @@ export const AuthScreen = () => {
    * handleForgotPassword: Şifremi unuttum butonuna basıldığında çalışır
    */
   const handleForgotPassword = async () => {
-    if (!email) {
-      setError("Şifre sıfırlamak için email adresinizi girin!");
+    if (!resetEmail) {
+      setError("E-posta adresinizi girin!");
       return;
     }
 
@@ -177,7 +183,7 @@ export const AuthScreen = () => {
     try {
       const usersResponse = await fetch("http://10.0.2.2:3001/users");
       const users = await usersResponse.json();
-      const user = users.find((u: any) => u.email === email);
+      const user = users.find((u: any) => u.email === resetEmail);
 
       if (!user) {
         setError("Bu email adresi sistemde kayıtlı değil!");
@@ -190,17 +196,18 @@ export const AuthScreen = () => {
       
       // Email göndermeyi dene
       console.log('🚀 Email gönderme işlemi başlatılıyor...');
-      const emailSent = await sendEmailCode(email, code, user.name);
+      const emailSent = await sendEmailCode(resetEmail, code, user.name);
       
       if (emailSent) {
-        alert(`✅ Doğrulama kodu ${email} adresine gönderildi!`);
-        console.log(`✅ Email başarıyla gönderildi: ${email}`);
+        alert(`✅ Doğrulama kodu ${resetEmail} adresine gönderildi!`);
+        console.log(`✅ Email başarıyla gönderildi: ${resetEmail}`);
       } else {
         // Email gönderilemezse konsol mesajı ver
         console.log(`⚠️ Email gönderilemedi - EmailJS ayarlarını kontrol edin`);
         alert(`⚠️ Email gönderilemedi!\n\nGeliştirme kodu: ${code}\n\nKonsolu kontrol edin.`);
       }
       
+      setShowForgotPassword(false);
       setShowCodeVerification(true);
       setError("");
       
@@ -252,7 +259,7 @@ export const AuthScreen = () => {
       // Önce kullanıcıyı bul
       const usersResponse = await fetch("http://10.0.2.2:3001/users");
       const users = await usersResponse.json();
-      const user = users.find((u: any) => u.email === email);
+      const user = users.find((u: any) => u.email === resetEmail);
 
       if (!user) {
         setError("Kullanıcı bulunamadı!");
@@ -272,7 +279,7 @@ export const AuthScreen = () => {
 
       if (updateResponse.ok) {
         alert("Şifre başarıyla değiştirildi!");
-        console.log("✅ Şifre veritabanında güncellendi:", { userId: user.id, email: email });
+        console.log("✅ Şifre veritabanında güncellendi:", { userId: user.id, email: resetEmail });
         
         // Tüm modal'ları kapat ve formu temizle
         resetForgotPasswordStates();
@@ -294,6 +301,7 @@ export const AuthScreen = () => {
     setShowForgotPassword(false);
     setShowCodeVerification(false);
     setShowPasswordReset(false);
+    setResetEmail("");
     setVerificationCode("");
     setGeneratedCode("");
     setNewPassword("");
@@ -505,7 +513,10 @@ export const AuthScreen = () => {
                   {activeTab === "signin" && (
                   <TouchableOpacity
                     style={styles.forgotPasswordContainer}
-                    onPress={handleForgotPassword}
+                    onPress={() => {
+                      setShowForgotPassword(true);
+                      setError("");
+                    }}
                     activeOpacity={0.7}
                   >
                     <Text style={styles.forgotPasswordText}>Şifremi Unuttum</Text>
@@ -517,13 +528,57 @@ export const AuthScreen = () => {
             </View>
           </ScrollView>
 
+          {/* Email Input Modal for Forgot Password */}
+          {showForgotPassword && (
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Şifre Sıfırlama</Text>
+                <Text style={styles.modalSubtitle}>
+                  E-posta adresinizi girin
+                </Text>
+                
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="E-posta"
+                  placeholderTextColor="#94A3B8"
+                  value={resetEmail}
+                  onChangeText={setResetEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+                
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity
+                    style={styles.modalCancelButton}
+                    onPress={() => {
+                      setShowForgotPassword(false);
+                      setResetEmail("");
+                      setError("");
+                    }}
+                  >
+                    <Text style={styles.modalCancelText}>İptal</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.modalConfirmButton}
+                    onPress={handleForgotPassword}
+                  >
+                    <Text style={styles.modalConfirmText}>Kod Gönder</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
+
           {/* Code Verification Modal */}
           {showCodeVerification && (
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
                 <Text style={styles.modalTitle}>Doğrulama Kodu</Text>
                 <Text style={styles.modalSubtitle}>
-                  {email} adresine gönderilen 6 haneli kodu girin
+                  {resetEmail} adresine gönderilen 6 haneli kodu girin
                 </Text>
                 
                 <TextInput

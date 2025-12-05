@@ -7,6 +7,7 @@ import { MainAppTabs } from "./Components/TabBar";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { Notes } from "./MainApp/notes";
 import { NoteEditor } from "./MainApp/NoteEditor";
+import { CalendarScreen } from "./MainApp/CalendarScreen";
 import { registerDomainExpiryTask } from "./services/domainExpiryTask";
 
 const Stack = createStackNavigator();
@@ -17,6 +18,7 @@ const MainStack = () => {
       <Stack.Screen name="MainTabs" component={MainAppTabs} />
       <Stack.Screen name="Notlar" component={Notes} />
       <Stack.Screen name="NoteEditor" component={NoteEditor} />
+      <Stack.Screen name="Takvim" component={CalendarScreen} />
     </Stack.Navigator>
   );
 };
