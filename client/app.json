@@ -23,7 +23,8 @@
       "package": "com.saidari.client",
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
-        "SCHEDULE_EXACT_ALARM"
+        "SCHEDULE_EXACT_ALARM",
+        "android.permission.WAKE_LOCK"
       ]
     },
     "web": {

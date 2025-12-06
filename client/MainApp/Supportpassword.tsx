@@ -15,6 +15,7 @@ import { PasswordCard } from "../Components/passwordcard";
 import { useAuth } from "../context/AuthContext";
 import { AddButton } from "../Components/addmodal";
 import { PasswordAddModal } from "./PasswordAddModal";
+import { registerPasswordCleanupTask } from "../services/passwordCleanupTask";
 
 export const SupportPassword = () => {
   // Auth Context'ten kullanıcı bilgilerini al
@@ -88,65 +89,13 @@ export const SupportPassword = () => {
   );
 
   /**
-   * useEffect: Günlük şifreleri otomatik siler (her gün 00:00'da)
-   * - Oluşturulma tarihinden 1 gün geçmişse siler
+   * useEffect: Background Task'ı kaydet (bir kez, mount'ta)
+   * - Uygulamaya her girişte background task'ın kayıtlı olduğundan emin olur
+   * - Otomatik silme işlemi background'da çalışır (gece 12'de)
    */
   useEffect(() => {
-    const checkAndDeleteOldPasswords = async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Bugünün başlangıcı
-      
-      // 1 günden eski şifreleri bul
-      const oldPasswords = passwords.filter((p: any) => {
-        const createdDate = new Date(p.createdAt);
-        createdDate.setHours(0, 0, 0, 0);
-        return createdDate < today;
-      });
-
-      // Eğer eski şifre varsa sil
-      if (oldPasswords.length > 0) {
-        console.log(`${oldPasswords.length} eski şifre siliniyor...`);
-        
-        for (const password of oldPasswords) {
-          try {
-            await deletePassword((password as any).id);
-            console.log(`Şifre DB'den silindi: ${(password as any).id}`);
-          } catch (error) {
-            console.error(`Şifre silme hatası (${(password as any).id}):`, error);
-          }
-        }
-        
-        // Listeyi yenile
-        await handleFetchpassword();
-      }
-    };
-
-    // İlk yükleme kontrolü
-    if (passwords.length > 0) {
-      checkAndDeleteOldPasswords();
-    }
-
-    // Her gece 00:00'da kontrol et
-    const now = new Date();
-    const night = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 1, // Yarın
-      0, 0, 0, 0 // 00:00:00
-    );
-    const msUntilMidnight = night.getTime() - now.getTime();
-    
-    // İlk kontrol yarın gece 00:00'da
-    const timeout = setTimeout(() => {
-      checkAndDeleteOldPasswords();
-      // Sonra her 24 saatte bir kontrol et
-      const interval = setInterval(checkAndDeleteOldPasswords, 86400000); // 24 saat
-      return () => clearInterval(interval);
-    }, msUntilMidnight);
-
-    // Cleanup: Component unmount olduğunda timeout'u temizle
-    return () => clearTimeout(timeout);
-  }, [passwords]); // passwords değiştiğinde yeniden çalış
+    registerPasswordCleanupTask();
+  }, []);
 
 
   /**
