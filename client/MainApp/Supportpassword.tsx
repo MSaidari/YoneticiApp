@@ -22,7 +22,7 @@ export const SupportPassword = () => {
   
   // State'ler:
   // passwords: API'den çekilen şifrelerin listesi
-  const [passwords, setPasswords] = useState([]);
+  const [passwords, setPasswords] = useState<any[]>([]);
   
   // loading: Veriler yüklenirken gösterilecek
   const [loading, setLoading] = useState(true);
@@ -47,18 +47,29 @@ export const SupportPassword = () => {
       setLoading(true); // Yükleme başladı
       setError(""); // Önceki hataları temizle
       
-      // Admin ise veya yetki varsa tüm şifreleri + kullanıcı bilgisi getir
+      // Admin ise veya yetki varsa tüm şifreleri getir, yoksa sadece kendi şifrelerini
       const userId = currentUser?.id === 0 ? undefined : currentUser?.id;
       const hasPermission = currentUser?.permissions?.passwords || false;
-      const passwordsData = await fetchDataWithUserInfo("passwords", userId, isAdmin, hasPermission);
+      
+      let passwordsResponse;
+      if (isAdmin || hasPermission) {
+        // Admin veya yetkili: tüm şifreleri getir
+        passwordsResponse = await fetchPasswords();
+      } else {
+        // Normal kullanıcı: sadece kendi şifrelerini getir
+        passwordsResponse = await fetchPasswords(userId);
+      }
+      
+      const passwordsData = await passwordsResponse.json();
       
       // State'e kaydet
-      setPasswords(passwordsData);
+      setPasswords(Array.isArray(passwordsData) ? passwordsData : []);
       
       console.log("Şifreler başarıyla yüklendi:", passwordsData.length, "şifre");
     } catch (error) {
       console.error("Şifreleri alma hatası:", error);
       setError("Şifreler yüklenirken bir hata oluştu");
+      setPasswords([]);
     } finally {
       // Her durumda loading'i false yap (try veya catch'ten sonra)
       setLoading(false);
