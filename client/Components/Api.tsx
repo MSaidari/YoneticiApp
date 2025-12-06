@@ -2,7 +2,9 @@ import { Platform } from "react-native";
 
 // API URL'ini belirle (Android emulator vs iOS simulator)
 const URL =
-  "https://my-json-server.typicode.com/MSaidari/ProjeYonetici/" // GitHub repo: ProjeYonetici
+  Platform.OS === "android"
+    ? "http://10.0.2.2:3001/" // Android için özel IP
+    : "http://localhost:3001/"; // GitHub repo: ProjeYonetici
 
 // "https://my-json-server.typicode.com/MSaidari/ProjeYonetici/"
 // "android"
