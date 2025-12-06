@@ -181,7 +181,7 @@ export const AuthScreen = () => {
 
     // Önce email'in sistemde kayıtlı olup olmadığını kontrol et
     try {
-      const usersResponse = await fetch("http://10.0.2.2:3001/users");
+      const usersResponse = await fetchUsers();
       const users = await usersResponse.json();
       const user = users.find((u: any) => u.email === resetEmail);
 
@@ -257,7 +257,7 @@ export const AuthScreen = () => {
     
     try {
       // Önce kullanıcıyı bul
-      const usersResponse = await fetch("http://10.0.2.2:3001/users");
+      const usersResponse = await fetchUsers();
       const users = await usersResponse.json();
       const user = users.find((u: any) => u.email === resetEmail);
 
@@ -267,14 +267,8 @@ export const AuthScreen = () => {
       }
 
       // Şifreyi veritabanında güncelle
-      const updateResponse = await fetch(`http://10.0.2.2:3001/users/${user.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          password: newPassword,
-        }),
+      const updateResponse = await updateData("users", user.id, {
+        password: newPassword,
       });
 
       if (updateResponse.ok) {
